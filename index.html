@@ -4,134 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <meta name="theme-color" content="#0a0f1c">
+    <meta name="theme-color" content="#0a0f1c" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#0a0f1c" media="(prefers-color-scheme: light)">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Turbine Log">
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Turbine Log">
+    <meta name="msapplication-TileColor" content="#0a0f1c">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="msapplication-starturl" content="./index.html">
+    
     <meta name="description" content="Turbine Logsheet Professional - PT Petrokimia Gresik">
-    
-    <link rel="manifest" href="manifest.json?v=2.0.0">
+    <meta name="author" content="Unit Utilitas 3B">
+    <meta name="robots" content="noindex, nofollow">
+
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icon-32x32.png">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <title>Turbine Logsheet Pro</title>
-    
-    <link rel="stylesheet" href="css/style.css?v=3.4.0">
-</head>
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+
+    <link rel="stylesheet" href="css/style.css">        <link rel="stylesheet" href="css/layout.css">       <link rel="stylesheet" href="css/components.css">   <link rel="stylesheet" href="css/screens.css">      </head>
 <body>
 
-<div id="loader" class="loader-overlay">
-    <div class="loader-content">
-        <div class="loader-logo">
-            <div class="loader-logo-inner">⚡</div>
-        </div>
-        <div class="loader-text">
-            <h3>Utilitas 3B</h3>
-            <p>Sinkronisasi Data...</p>
-            <div class="progress-bar-loader">
-                <div class="fill" id="loaderProgress" style="width: 0%"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="updateAlert" class="custom-alert hidden"></div>
-<div id="customAlert" class="custom-alert hidden"></div>
-<div id="changePasswordModal" class="custom-alert hidden"></div>
-<div id="uploadProgressOverlay" class="upload-overlay hidden"></div>
-
-<div class="app-container">
-
-    <div id="loginScreen" class="screen active">
-        <div class="login-container">
-            <div class="login-header">
-                <div class="logo-container animated">
-                    <img src="logo.png" alt="Logo" id="loginLogo">
-                </div>
-                <h1 class="app-title">TURBINE LOGSHEET PRO</h1>
-                <p class="app-subtitle">PT Petrokimia Gresik</p>
-            </div>
-            <div class="login-form glass">
-                <h2 class="login-title">🔐 Login Operator</h2>
-                <div class="input-group">
-                    <input type="text" id="operatorUsername" class="login-input" placeholder="Username">
-                </div>
-                <div class="input-group">
-                    <input type="password" id="operatorPassword" class="login-input" placeholder="Password">
-                </div>
-                <p id="loginError" class="login-error"></p>
-                <button class="btn btn-primary btn-full" onclick="loginOperator()">🔓 Masuk</button>
-            </div>
-            <div class="login-footer">
-                <p>PT Petrokimia Gresik • Unit III B</p>
-                <span class="version-tag">v<span id="versionDisplay"></span></span>
-            </div>
-        </div>
-    </div>
-
-    <div id="homeScreen" class="screen">
-        <div class="home-header glass-header">
-            <div class="header-top">
-                <div class="user-info">
-                    <div class="avatar">👤</div>
-                    <span id="displayUserName">Operator</span>
-                </div>
-                <div class="header-actions">
-                    <button id="installPwaBtn" class="btn-icon btn-install hidden" onclick="installPWA()">📥</button>
-                    <button class="btn-icon btn-password" onclick="showChangePasswordModal()">🔐</button>
-                    <button class="btn-icon logout-btn" onclick="logoutOperator()">🚪</button>
-                </div>
-            </div>
-            <div class="home-hero-content">
-                <h1 class="home-title">LOGSHEET DIGITAL</h1>
-            </div>
-        </div>
-        
-        <div class="home-content-area">
-            <div class="round-menu-section">
-                <button class="round-menu-btn" onclick="toggleBranchMenuPopup()">☰</button>
-            </div>
-            <div class="job-list-section" id="jobListContainer"></div>
-        </div>
-    </div>
-
-    <div id="branchMenuPopupOverlay" class="modern-menu-overlay hidden" onclick="closeBranchMenuPopup()"></div>
-
-    <div id="logsheetSelectScreen" class="screen">
-        </div>
-
-    <div id="areaListScreen" class="screen">
-        </div>
-
-    <div id="paramScreen" class="screen">
-        </div>
-
-    <div id="ctAreaListScreen" class="screen">
-        </div>
-
-    <div id="ctParamScreen" class="screen">
-        </div>
-
-    <div id="balancingScreen" class="screen">
-        </div>
-
-    <div id="tpmScreen" class="screen">
-        </div>
-
-</div>
-
-<script src="js/config.js"></script>
-<script src="js/ui-utils.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/turbine.js"></script>
-<script src="js/cooling-tower.js"></script>
-<script src="js/balancing.js"></script>
-<script src="js/tpm.js"></script>
-<script src="js/app.js"></script>
-
+    <script src="js/config.js"></script>    <script src="js/state.js"></script>     <script src="js/utils.js"></script>     <script src="js/auth.js"></script>      <script src="js/users.js"></script>     <script src="js/logsheet.js"></script>  <script src="js/tpm.js"></script>       <script src="js/balancing.js"></script> <script src="js/main.js"></script>      <script>
+        // Override untuk update UI user di Logsheet Selection Screen
+        document.addEventListener('DOMContentLoaded', function() {
+            const originalNavigateTo = window.navigateTo;
+            window.navigateTo = function(screenId) {
+                // Gunakan window.currentUser karena state dipisah ke file terpisah
+                if (screenId === 'logsheetSelectScreen' && window.currentUser) {
+                    const userEl = document.getElementById('logsheetSelectUser');
+                    if (userEl) userEl.textContent = window.currentUser.name || window.currentUser.username;
+                }
+                if (typeof originalNavigateTo === 'function') {
+                    originalNavigateTo(screenId);
+                } else {
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    const target = document.getElementById(screenId);
+                    if (target) target.classList.add('active');
+                }
+            };
+        });
+    </script>
 </body>
 </html>
