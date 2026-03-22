@@ -242,3 +242,31 @@ function closeBranchMenuPopup() {
         overlay.classList.add('hidden');
     }
 }
+
+/**
+ * Fungsi Navigasi Global
+ * Digunakan untuk berpindah antar layar (screen)
+ */
+function navigateTo(screenId) {
+    // Sembunyikan semua screen
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+
+    // Tampilkan screen yang dituju
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+        
+        // Scroll ke atas secara otomatis
+        window.scrollTo(0, 0);
+        
+        // Logika khusus jika ke layar Logsheet (Update nama user)
+        if (screenId === 'logsheetSelectScreen' && typeof currentUser !== 'undefined' && currentUser) {
+            const userEl = document.getElementById('logsheetSelectUser');
+            if (userEl) userEl.textContent = currentUser.name || currentUser.username;
+        }
+    } else {
+        console.error(`Layar dengan ID "${screenId}" tidak ditemukan!`);
+    }
+}
