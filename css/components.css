@@ -1,0 +1,324 @@
+/* ============================================
+   TURBINE LOGSHEET PRO - COMPONENTS
+   ============================================ */
+
+/* ============================================
+   1. BUTTONS
+   ============================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sm);
+    padding: var(--md) var(--lg);
+    border-radius: var(--radius-md);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    outline: none;
+    min-height: 48px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.btn:hover::before { opacity: 1; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* Button Variants */
+.btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; box-shadow: 0 4px 16px var(--primary-glow); }
+.btn-primary:hover { box-shadow: 0 6px 24px var(--primary-glow); transform: translateY(-2px); }
+
+.btn-secondary { background: rgba(30, 41, 59, 0.8); color: var(--text-secondary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--surface-hover); border-color: var(--border-hover); }
+
+.btn-success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); color: white; box-shadow: var(--shadow-success); }
+.btn-submit { background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); color: white; box-shadow: var(--shadow-warning); }
+.btn-camera { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; margin-top: var(--md); }
+
+/* Utility Buttons */
+.btn-full { width: 100%; }
+.btn-flex { flex: 1; }
+.btn-sm { padding: var(--sm) var(--md); font-size: 0.875rem; min-height: 40px; }
+
+/* Floating Action Button (FAB) */
+.btn-floating {
+    position: fixed;
+    bottom: calc(var(--xl) + var(--safe-bottom));
+    left: var(--lg);
+    right: var(--lg);
+    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    color: white;
+    box-shadow: var(--shadow-success);
+    z-index: 100;
+}
+.btn-floating:hover { box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4); }
+
+/* Icon Buttons */
+.btn-icon {
+    width: 44px; height: 44px; min-height: 44px; padding: 0;
+    background: rgba(30, 41, 59, 0.6); color: var(--text-secondary);
+    border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); transition: all 0.2s ease;
+}
+.btn-icon:hover { background: rgba(30, 41, 59, 0.9); border-color: var(--border-hover); color: var(--text); }
+.btn-icon:active { transform: scale(0.95); }
+
+/* Header Action Buttons */
+.btn-password { color: var(--warning); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); }
+.btn-password:hover { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.4); color: var(--warning-light); }
+.logout-btn { color: var(--danger); background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); }
+.logout-btn:hover { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); color: var(--danger-light); }
+
+/* Toolbar Buttons */
+.btn-history, .btn-reset { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+.btn-history { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border: 1px solid rgba(59, 130, 246, 0.2); }
+.btn-history:hover { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); transform: translateY(-2px); }
+.btn-reset { background: rgba(239, 68, 68, 0.1); color: var(--danger-light); border: 1px solid rgba(239, 68, 68, 0.2); }
+.btn-reset:hover { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4); transform: translateY(-2px); }
+
+/* ============================================
+   2. CARDS
+   ============================================ */
+/* Form Cards */
+.form-card {
+    padding: var(--lg);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--lg);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border);
+}
+
+.form-section-title { font-size: 1.0625rem; font-weight: 700; margin-bottom: var(--lg); color: var(--text); }
+
+/* Parameter Card */
+.param-card {
+    padding: var(--xl);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--lg);
+    flex: 1;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border);
+}
+
+/* Photo Card */
+.photo-card {
+    padding: var(--lg);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--lg);
+    text-align: center;
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border);
+}
+
+/* Progress Card */
+.progress-card {
+    margin: var(--md) var(--lg) var(--md);
+    padding: var(--lg);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border);
+}
+
+/* Status Abnormal Card */
+.status-abnormal-card {
+    margin: var(--lg) 0;
+    padding: var(--lg);
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-lg);
+    animation: slideUp 0.3s ease;
+}
+
+#ctParamScreen .status-abnormal-card {
+    background: rgba(6, 182, 212, 0.05);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+/* Menu Card */
+.menu-card {
+    display: flex; align-items: center; gap: var(--md); padding: var(--lg);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+}
+
+/* Logsheet Select Card */
+.logsheet-select-card {
+    display: flex; align-items: center; gap: var(--lg); padding: var(--xl);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-xl);
+    cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+
+/* List Item / Area Item Card */
+.list-item, .area-item {
+    display: flex; align-items: center; gap: var(--md); padding: var(--lg);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.8) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: var(--md);
+    cursor: pointer; transition: all 0.3s ease;
+}
+
+/* ============================================
+   3. FORMS & INPUTS
+   ============================================ */
+.form-field { margin-bottom: var(--lg); }
+.form-field:last-child { margin-bottom: 0; }
+.form-field label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--sm); }
+
+/* Input Base */
+.form-field input, .form-field textarea, .form-field select, .limit-input input {
+    width: 100%; padding: var(--md) var(--lg); background: rgba(15, 23, 42, 0.6);
+    border: 2px solid var(--border); border-radius: var(--radius-md); color: var(--text);
+    font-family: inherit; font-size: 0.9375rem; outline: none; transition: all 0.2s ease;
+}
+
+.form-field textarea { resize: vertical; min-height: 80px; }
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow);
+}
+
+/* Auto & Calculated Fields */
+.auto-field { background: rgba(59, 130, 246, 0.1) !important; border-color: var(--primary) !important; color: var(--primary-light) !important; font-weight: 700; text-align: center; }
+.calculated-field input { background: rgba(16, 185, 129, 0.1) !important; border-color: var(--success) !important; color: var(--success) !important; font-weight: 700; font-size: 1.25rem; }
+.calculated-field.highlight-impor input.impor-indicator { background: rgba(245, 158, 11, 0.1) !important; border-color: var(--warning) !important; color: var(--warning) !important; }
+.highlight-field input { background: rgba(59, 130, 246, 0.05); border-color: var(--primary); }
+
+/* Select Wrapper */
+.select-wrapper { position: relative; }
+.with-select select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px;
+}
+
+/* Status Note Input (Abnormal) */
+.status-note input {
+    width: 100%; padding: 12px var(--md); background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md);
+    color: var(--text); font-size: 0.875rem; outline: none;
+}
+.status-note input:focus { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+#ctParamScreen .status-note input { border-color: rgba(6, 182, 212, 0.3); }
+#ctParamScreen .status-note input:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1); }
+
+/* Big Param Input Box */
+.input-box {
+    display: flex; align-items: center; background: rgba(15, 23, 42, 0.6);
+    border: 2px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;
+    margin-bottom: var(--xl); transition: all 0.2s ease;
+}
+.input-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+#ctMainInputWrapper:focus-within { border-color: var(--info); box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.2); }
+.input-field { flex: 1; padding: var(--md) var(--lg); }
+.input-field input, .input-field select { width: 100%; background: transparent; border: none; color: var(--text); font-size: 1.5rem; font-weight: 700; outline: none; }
+.input-unit { padding: 0 var(--lg); background: rgba(59, 130, 246, 0.1); color: var(--primary-light); font-weight: 700; font-size: 0.9375rem; border-left: 2px solid var(--border); min-height: 64px; display: flex; align-items: center; white-space: nowrap; }
+#ctMainInputWrapper .input-unit { background: rgba(6, 182, 212, 0.1); color: var(--info); }
+
+/* ============================================
+   4. ALERTS & MODALS
+   ============================================ */
+.custom-alert {
+    position: fixed; inset: 0; background: rgba(10, 15, 28, 0.9); backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center; z-index: 10001;
+    padding: var(--lg); opacity: 1; transition: opacity 0.3s ease;
+}
+.custom-alert.hidden { display: none !important; opacity: 0; }
+.alert-content {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(17, 24, 39, 0.95) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-xl); padding: var(--xxl);
+    text-align: center; width: 100%; max-width: 340px; animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: var(--shadow-lg);
+}
+
+.alert-icon-wrapper { width: 64px; height: 64px; margin: 0 auto var(--lg); position: relative; }
+.alert-icon-bg { position: absolute; inset: 0; background: var(--success); border-radius: 50%; opacity: 0.2; animation: pulse 2s infinite; }
+.alert-content h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: var(--sm); color: var(--text); }
+.alert-content p { font-size: 0.9375rem; color: var(--text-secondary); margin-bottom: var(--xl); line-height: 1.6; }
+
+.alert-btn {
+    width: 100%; padding: var(--md) var(--lg); background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white; border: none; border-radius: var(--radius-md); font-size: 0.9375rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px var(--primary-glow);
+}
+.alert-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
+.alert-btn.success { background: linear-gradient(135deg, var(--success) 0%, #059669 100%); box-shadow: var(--shadow-success); }
+
+/* ============================================
+   5. LOADERS & PROGRESS
+   ============================================ */
+/* Full Screen Loader */
+.loader-overlay {
+    position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 10000;
+}
+.loader-content { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; max-width: 320px; padding: 24px; }
+
+/* Progress Bar Loader */
+.progress-bar-loader { width: 200px; height: 4px; background: rgba(148, 163, 184, 0.15); border-radius: var(--radius-full); overflow: hidden; margin: 0 auto; position: relative; }
+.progress-bar-loader::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); animation: shimmer 2s infinite; }
+.progress-bar-loader .fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--info), var(--success)); width: 0%; transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: var(--radius-full); position: relative; z-index: 1; }
+
+/* Progress Bar (Cards) */
+.progress-bar-bg { width: 100%; height: 8px; background: rgba(148, 163, 184, 0.1); border-radius: var(--radius-full); overflow: hidden; }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--info), var(--success)); border-radius: var(--radius-full); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); width: 0%; position: relative; }
+.progress-bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); animation: shimmer 2s infinite; }
+
+/* Upload Progress Ring */
+.progress-ring { transform: rotate(-90deg); width: 120px; height: 120px; }
+.progress-ring-bg { fill: none; stroke: rgba(148, 163, 184, 0.15); stroke-width: 6; }
+.progress-ring-fill { fill: none; stroke: var(--primary); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 339.292; stroke-dashoffset: 339.292; transition: stroke-dashoffset 0.3s ease; }
+
+/* Progress Dots (Parameter Screen) */
+.param-dots { display: flex; justify-content: center; gap: var(--sm); margin-bottom: var(--lg); flex-wrap: wrap; }
+.progress-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(30, 41, 59, 0.8); cursor: pointer; transition: all 0.2s ease; border: 1px solid var(--border); }
+.progress-dot:hover { transform: scale(1.2); }
+.progress-dot.active { background: var(--primary); border-color: var(--primary); transform: scale(1.3); box-shadow: 0 0 10px var(--primary-glow); }
+.progress-dot.filled { background: var(--success); border-color: var(--success); }
+#ctParamScreen .progress-dot.active { background: var(--info); border-color: var(--info); box-shadow: 0 0 10px rgba(6, 182, 212, 0.3); }
+
+/* ============================================
+   6. BADGES, CHIPS & TAGS
+   ============================================ */
+/* Status Chip (Abnormal Selection) */
+.status-chip {
+    display: flex; align-items: center; gap: 6px; padding: 10px 14px;
+    background: rgba(30, 41, 59, 0.8); border: 2px solid var(--border); border-radius: 24px;
+    cursor: pointer; transition: all 0.2s ease; font-size: 0.8125rem; color: var(--text-muted); font-weight: 500;
+}
+.status-chip:hover { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.1); }
+#ctParamScreen .status-chip:hover { border-color: rgba(6, 182, 212, 0.4); background: rgba(6, 182, 212, 0.1); }
+.status-chip.active { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: var(--danger-light); font-weight: 600; }
+#ctParamScreen .status-chip.active { background: rgba(6, 182, 212, 0.2); border-color: var(--info); color: var(--info); }
+.status-chip input { display: none; }
+
+/* Badges */
+.shift-badge { display: inline-block; padding: var(--xs) var(--lg); background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); color: white; border-radius: var(--radius-full); font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.1em; box-shadow: var(--shadow-warning); }
+.limit-badge { padding: var(--xs) var(--sm); background: rgba(239, 68, 68, 0.1); color: var(--danger); border-radius: var(--radius-sm); font-size: 0.6875rem; font-weight: 700; white-space: nowrap; }
+.admin-badge { background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; margin-left: var(--xs); text-transform: uppercase; letter-spacing: 0.05em; }
+.step-badge { background: rgba(59, 130, 246, 0.15); padding: var(--xs) var(--md); border-radius: var(--radius-full); border: 1px solid rgba(59, 130, 246, 0.2); }
+.step-badge span { font-size: 0.875rem; font-weight: 700; color: var(--primary-light); }
+.photo-badge { margin-left: auto; padding: 4px 12px; background: rgba(148, 163, 184, 0.15); color: var(--text-muted); border-radius: var(--radius-full); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; }
+.photo-badge.has-photo { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+/* User Pill & Tags */
+.user-pill {
+    display: flex; align-items: center; padding: var(--xs) var(--md);
+    background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-full);
+    font-size: 0.8125rem; color: var(--primary-light); max-width: 120px;
+    border: 1px solid rgba(59, 130, 246, 0.2); font-weight: 500;
+}
+.user-pill span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.version-tag { display: inline-flex; align-items: center; gap: var(--xs); padding: var(--xs) var(--md); background: rgba(59, 130, 246, 0.1); color: var(--primary-light); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(59, 130, 246, 0.2); }
