@@ -1,0 +1,253 @@
+/* ============================================
+   TURBINE LOGSHEET PRO - LAYOUT & GRID SYSTEM
+   ============================================ */
+
+/* ============================================
+   1. MAIN CONTAINERS & SCREENS
+   ============================================ */
+.app-container {
+    max-width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Screen Management */
+.screen {
+    display: none;
+    min-height: 100vh;
+    padding-bottom: calc(var(--lg) + var(--safe-bottom));
+    animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.screen.active {
+    display: block;
+}
+
+/* Specific Screen Layout overrides */
+#loginScreen.active {
+    display: flex !important;
+    flex-direction: column;
+}
+
+#balancingScreen.active,
+#ctAreaListScreen.active,
+#ctParamScreen.active,
+#logsheetSelectScreen.active {
+    display: block;
+}
+
+/* Base Content Containers */
+.form-container,
+.list-container,
+.areas-list {
+    padding: var(--md) var(--lg);
+    padding-bottom: calc(var(--xl) + var(--safe-bottom) + 80px); /* Extra space for FAB */
+}
+
+.param-container {
+    padding: var(--md) var(--lg);
+    padding-bottom: calc(var(--xl) + var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 60px);
+}
+
+/* ============================================
+   2. HEADERS
+   ============================================ */
+/* Generic Screen Header */
+.screen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: calc(var(--md) + var(--safe-top)) var(--lg) var(--md);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.screen-header h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    flex: 1;
+    text-align: center;
+    margin: 0 var(--sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+}
+
+.header-title-group {
+    flex: 1;
+    text-align: center;
+}
+
+.header-title-group h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: var(--text);
+}
+
+.header-subtitle {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    display: block;
+    font-weight: 500;
+}
+
+/* Home Screen Specific Header */
+.home-header {
+    padding: calc(var(--md) + var(--safe-top)) var(--lg) var(--xl);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    margin-bottom: var(--lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.home-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--lg);
+    position: relative;
+    z-index: 1;
+}
+
+.home-hero-content {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* ============================================
+   3. GRID SYSTEMS
+   ============================================ */
+/* General Input Grid */
+.input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--md);
+    margin-bottom: var(--md);
+}
+
+.input-grid.three-col {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.input-grid.two-col {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Main Menu Grid */
+.menu-grid {
+    padding: 0 var(--lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--md);
+    margin-bottom: var(--lg);
+}
+
+/* Status Button Grid (TPM) */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--sm);
+    margin-bottom: var(--lg);
+}
+
+/* Monitoring Items Grid (Balancing) */
+.monitoring-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--lg);
+}
+
+/* ============================================
+   4. HOME SCREEN SPLIT LAYOUT
+   ============================================ */
+.home-content-area {
+    padding: 0 var(--lg);
+    display: flex;
+    gap: var(--lg);
+    margin-bottom: var(--lg);
+    align-items: flex-start;
+}
+
+.round-menu-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sm);
+}
+
+.job-list-section {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ============================================
+   5. RESPONSIVE MEDIA QUERIES
+   ============================================ */
+/* Small Phones */
+@media (max-width: 360px) {
+    .input-grid.three-col {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Mid-size screens */
+@media (min-width: 400px) {
+    .menu-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--md);
+    }
+}
+
+/* Tablets / Desktop view constraint */
+@media (min-width: 480px) {
+    .app-container {
+        max-width: 480px;
+        margin: 0 auto;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Landscape Mode (Small Heights) */
+@media (max-height: 500px) and (orientation: landscape) {
+    .login-container {
+        padding-top: var(--lg);
+    }
+    
+    .home-hero-content .logo-container {
+        display: none;
+    }
+}
+
+/* PWA Standalone Mode Padding Adjustments */
+@media all and (display-mode: standalone) {
+    .screen-header {
+        padding-top: calc(var(--md) + max(12px, env(safe-area-inset-top)));
+    }
+    
+    #loginScreen .login-container {
+        padding-top: calc(var(--xl) + max(20px, env(safe-area-inset-top)));
+    }
+    
+    .form-container, .list-container {
+        padding-bottom: calc(var(--xl) + max(20px, env(safe-area-inset-bottom)));
+    }
+}
