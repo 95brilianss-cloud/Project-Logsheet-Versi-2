@@ -197,6 +197,39 @@ function closeBranchMenuPopup() {
     if (overlay) overlay.classList.add('hidden');
 }
 
+/**
+ * Menampilkan overlay notifikasi update versi
+ */
+function showUpdateAlert() {
+    const updateAlert = document.getElementById('updateAlert');
+    if (updateAlert) {
+        updateAlert.classList.remove('hidden');
+    }
+}
+
+/**
+ * Menjalankan proses update dengan memberitahu Service Worker 
+ * untuk segera mengaktifkan versi baru (Skip Waiting)
+ */
+function applyUpdate() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(reg => {
+            if (reg && reg.waiting) {
+                // Kirim pesan ke sw.js agar skipWaiting
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            } else {
+                // Fallback jika reg.waiting hilang, langsung reload
+                window.location.reload();
+            }
+        });
+    }
+
+    // Listener otomatis: saat SW baru mengambil alih kendali, reload halaman
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
+}
+
 // ============================================
 // 4. UI SETUP & LISTENERS
 // ============================================
