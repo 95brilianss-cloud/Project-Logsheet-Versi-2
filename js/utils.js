@@ -219,3 +219,26 @@ function cleanupJSONP(callbackName) {
     const scripts = document.querySelectorAll(`script[src*="${callbackName}"]`);
     scripts.forEach(script => script.remove());
 }
+// ============================================
+// 5. MENU NAVIGATION HELPERS
+// ============================================
+
+/**
+ * Membuka atau menutup popup menu utama
+ */
+function toggleBranchMenuPopup() {
+    const overlay = document.getElementById('branchMenuPopupOverlay');
+    if (overlay) {
+        overlay.classList.toggle('hidden');
+    }
+}
+
+/**
+ * Menutup popup menu utama
+ */
+function closeBranchMenuPopup() {
+    const overlay = document.getElementById('branchMenuPopupOverlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+    }
+}
