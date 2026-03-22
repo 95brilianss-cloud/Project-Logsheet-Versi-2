@@ -20,33 +20,1180 @@
     <meta name="description" content="Turbine Logsheet Professional - PT Petrokimia Gresik">
     <meta name="author" content="Unit Utilitas 3B">
     <meta name="robots" content="noindex, nofollow">
-
-    <link rel="manifest" href="manifest.json">
+    
+    <link rel="manifest" href="manifest.json?v=2.0.0">
+    
     <link rel="apple-touch-icon" href="icon-192x192.png">
-    <link rel="icon" type="image/png" href="icon-192x192.png">
-
-    <link rel="stylesheet" href="css/style.css">        <link rel="stylesheet" href="css/layout.css">       <link rel="stylesheet" href="css/components.css">   <link rel="stylesheet" href="css/screens.css">      </head>
+    <link rel="apple-touch-icon" sizes="72x72" href="icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="96x96" href="icon-96x96.png">
+    <link rel="apple-touch-icon" sizes="128x128" href="icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="384x384" href="icon-384x384.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512x512.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icon-16x16.png">
+    <link rel="shortcut icon" href="icon-192x192.png">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚡%3C/text%3E%3C/svg%3E">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <title>Turbine Logsheet Pro</title>
+    
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/screens.css">
+</head>
 <body>
 
-    <script src="js/config.js"></script>    <script src="js/state.js"></script>     <script src="js/utils.js"></script>     <script src="js/auth.js"></script>      <script src="js/users.js"></script>     <script src="js/logsheet.js"></script>  <script src="js/tpm.js"></script>       <script src="js/balancing.js"></script> <script src="js/main.js"></script>      <script>
-        // Override untuk update UI user di Logsheet Selection Screen
-        document.addEventListener('DOMContentLoaded', function() {
-            const originalNavigateTo = window.navigateTo;
-            window.navigateTo = function(screenId) {
-                // Gunakan window.currentUser karena state dipisah ke file terpisah
-                if (screenId === 'logsheetSelectScreen' && window.currentUser) {
-                    const userEl = document.getElementById('logsheetSelectUser');
-                    if (userEl) userEl.textContent = window.currentUser.name || window.currentUser.username;
-                }
-                if (typeof originalNavigateTo === 'function') {
-                    originalNavigateTo(screenId);
-                } else {
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    const target = document.getElementById(screenId);
-                    if (target) target.classList.add('active');
-                }
-            };
-        });
-    </script>
+<div id="loader" class="loader-overlay">
+    <div class="loader-content">
+        <div class="loader-logo">
+            <div class="loader-logo-inner">⚡</div>
+        </div>
+        <div class="loader-text">
+            <h3>Utilitas 3B</h3>
+            <p>Sinkronisasi Data...</p>
+            <div class="progress-bar-loader">
+                <div class="fill" id="loaderProgress" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="updateAlert" class="custom-alert hidden">
+    <div class="alert-content" style="max-width: 340px;">
+        <div style="width: 64px; height: 64px; margin: 0 auto 20px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);">🔄</div>
+        <h3 style="margin-bottom: 8px; font-size: 1.25rem; font-weight: 700;">Update Tersedia</h3>
+        <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9375rem;">Versi baru aplikasi telah tersedia dengan fitur terbaru.</p>
+        <button class="alert-btn" onclick="applyUpdate()">Update Sekarang</button>
+    </div>
+</div>
+
+<div id="customAlert" class="custom-alert hidden">
+    <div class="alert-content" id="alertContent" style="max-width: 340px;">
+        <div class="alert-icon-wrapper" id="alertIconWrapper">
+            <svg viewBox="0 0 52 52" style="stroke: #10b981; stroke-width: 3; fill: none;">
+                <circle cx="26" cy="26" r="25"/>
+                <path d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+        <h3 id="alertTitle" style="margin-bottom: 8px; font-size: 1.25rem; font-weight: 700;">Berhasil</h3>
+        <p id="alertMessage" style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9375rem;">Data berhasil dikirim!</p>
+        <button class="alert-btn success" onclick="closeAlert()">Oke</button>
+    </div>
+</div>
+
+<div id="changePasswordModal" class="custom-alert hidden" style="z-index: 10004;">
+    <div class="alert-content" style="max-width: 380px; width: 90%;">
+        <div style="text-align: center; margin-bottom: 24px;">
+            <div style="width: 72px; height: 72px; margin: 0 auto 16px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);">🔐</div>
+            <h3 style="margin: 0; font-size: 1.375rem; font-weight: 700; color: #f8fafc;">Ganti Password</h3>
+            <p style="margin: 8px 0 0; font-size: 0.9375rem; color: #94a3b8;">@<span id="cpUsername">-</span></p>
+        </div>
+
+        <form id="changePasswordForm" style="display: flex; flex-direction: column; gap: 16px;">
+            <div id="oldPasswordGroup">
+                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500;">Password Lama</label>
+                <div style="position: relative;">
+                    <input type="password" id="cpOldPassword" required class="login-input" style="padding-right: 44px;">
+                    <button type="button" onclick="toggleCPVisibility('cpOldPassword', this)" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500;">Password Baru</label>
+                <div style="position: relative;">
+                    <input type="password" id="cpNewPassword" required minlength="4" class="login-input" style="padding-right: 44px;">
+                    <button type="button" onclick="toggleCPVisibility('cpNewPassword', this)" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+                <small style="color: #64748b; font-size: 0.75rem; display: block; margin-top: 4px;">Minimal 4 karakter</small>
+            </div>
+
+            <div>
+                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 6px; font-weight: 500;">Konfirmasi Password Baru</label>
+                <div style="position: relative;">
+                    <input type="password" id="cpConfirmPassword" required class="login-input" style="padding-right: 44px;">
+                    <button type="button" onclick="toggleCPVisibility('cpConfirmPassword', this)" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; font-size: 18px;">👁️</button>
+                </div>
+                <div id="cpError" style="display: none; color: #ef4444; font-size: 0.875rem; margin-top: 8px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2);"></div>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button type="button" onclick="closeChangePasswordModal()" class="btn btn-secondary btn-flex">Batal</button>
+                <button type="submit" class="btn btn-submit btn-flex">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="app-container">
+    
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="logo-container animated">
+                    <img src="logo.png" alt="Logo" id="loginLogo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <div class="logo-fallback" style="display:none;">⚡</div>
+                </div>
+                <h1 class="app-title">TURBINE LOGSHEET PRO</h1>
+                <p class="app-subtitle">PT Petrokimia Gresik</p>
+            </div>
+                            
+            <div class="login-form glass">
+                <h2 class="login-title">🔐 Login Operator</h2>
+                <p class="login-subtitle">Masukkan username dan password</p>
+                
+                <div class="input-group">
+                    <div class="login-input-wrapper">
+                        <span class="login-input-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                        <input type="text" id="operatorUsername" class="login-input" placeholder="Username" autocomplete="username" enterkeyhint="next">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <div class="login-input-wrapper">
+                        <span class="login-input-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </span>
+                        <input type="password" id="operatorPassword" class="login-input" placeholder="Password" autocomplete="current-password" enterkeyhint="done">
+                        <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #64748b; cursor: pointer; padding: 4px;">
+                            <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <p id="loginError" class="login-error"></p>
+                
+                <button class="btn btn-primary btn-full" onclick="loginOperator()" style="margin-top: 8px;">
+                    <span>🔓 Masuk</span>
+                </button>
+                
+                <div style="margin-top: 24px; text-align: center;">
+                    <small style="color: #475569; font-size: 0.75rem;">
+                        💡 Default login:<br>NIK / NIK
+                    </small>
+                </div>
+            </div>
+            
+            <div class="login-footer">
+                <p>PT Petrokimia Gresik • Unit III B</p>
+                <span class="version-tag">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                    v<span id="versionDisplay"></span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div id="homeScreen" class="screen">
+        <div class="home-header glass-header">
+            <div class="header-top">
+                <div class="user-info">
+                    <div class="avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <span id="displayUserName">Operator</span>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 8px;">
+                    <button id="installPwaBtn" class="btn-icon btn-install hidden" onclick="installPWA()" title="Install App">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon btn-password" onclick="showChangePasswordModal()" title="Ganti Password">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon logout-btn" onclick="logoutOperator()" title="Keluar">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="home-hero-content">
+                <div class="logo-container small animated">
+                    <img src="logo.png" alt="Logo" id="mainLogo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                    <div class="logo-fallback" style="display:none;">⚡</div>
+                </div>
+                <h1 class="home-title">LOGSHEET DIGITAL</h1>
+                <p class="home-subtitle">Pilih Menu Untuk Memulai</p>
+            </div>
+        </div>
+
+        <div id="branchMenuPopupOverlay" class="modern-menu-overlay hidden" onclick="closeBranchMenuPopup()">
+            <div class="modern-menu-popup" onclick="event.stopPropagation()">
+                <div class="modern-menu-header">
+                    <h3>Menu Utama</h3>
+                    <button class="modern-menu-close" onclick="closeBranchMenuPopup()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="modern-menu-grid">
+                    <div class="modern-menu-card primary" onclick="navigateTo('logsheetSelectScreen'); closeBranchMenuPopup();">
+                        <div class="modern-menu-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                        </div>
+                        <span class="modern-menu-label">Logsheet</span>
+                    </div>
+
+                    <div class="modern-menu-card warning" onclick="navigateTo('tpmScreen'); closeBranchMenuPopup();">
+                        <div class="modern-menu-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+                            </svg>
+                        </div>
+                        <span class="modern-menu-label">TPM</span>
+                    </div>
+
+                    <div class="modern-menu-card success" onclick="navigateTo('balancingScreen'); closeBranchMenuPopup();">
+                        <div class="modern-menu-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                        </div>
+                        <span class="modern-menu-label">Balancing</span>
+                    </div>
+
+                    <div class="modern-menu-card danger" id="adminBranchItem" onclick="showUserManagement(); closeBranchMenuPopup();">
+                        <div class="modern-menu-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            </svg>
+                        </div>
+                        <span class="modern-menu-label">Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="home-content-area">
+            <div class="round-menu-section">
+                <button class="round-menu-btn" onclick="toggleBranchMenuPopup()" title="Menu Utama">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"/>
+                        <rect x="14" y="3" width="7" height="7"/>
+                        <rect x="14" y="14" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                </button>
+                <span class="round-menu-label" style="margin-top:8px;">Menu</span>
+            </div>
+
+            <div class="job-list-section">
+                <div class="job-list-header">
+                    <div class="job-list-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <h3>Job Hari Ini</h3>
+                    <span class="job-date" id="jobDate">--/--/----</span>
+                </div>
+                <div class="job-list-content" id="jobListContainer">
+                    <div class="job-loading">
+                        <div class="spinner"></div>
+                        <span>Memuat data...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="logsheetSelectScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('homeScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>Pilih Logsheet</h2>
+                <span class="header-subtitle">Pilih jenis logsheet yang akan diisi</span>
+            </div>
+            <div class="user-pill">
+                <span id="logsheetSelectUser">-</span>
+            </div>
+        </div>
+
+        <div class="logsheet-select-container">
+            <div class="logsheet-select-card" onclick="navigateTo('areaListScreen')">
+                <div class="logsheet-icon-large turbin">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: white;">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                    </svg>
+                </div>
+                <div class="logsheet-info">
+                    <h3>Logsheet Turbin</h3>
+                    <p>Input data operasional turbine, steam, lube oil, dan generator</p>
+                </div>
+                <div class="logsheet-arrow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="logsheet-select-card ct-version" onclick="navigateTo('ctAreaListScreen')">
+                <div class="logsheet-icon-large ct">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: white;">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        <path d="M12 22V12"/>
+                    </svg>
+                </div>
+                <div class="logsheet-info">
+                    <h3>Logsheet Cooling Tower</h3>
+                    <p>Input data operasional basin SA & SU, pompa, fan, dan chemical</p>
+                </div>
+                <div class="logsheet-arrow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18l6-6-6-6"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tpmScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('homeScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>TPM Areas</h2>
+            </div>
+            <div class="user-pill">
+                <span id="tpmHeaderUser">-</span>
+            </div>
+        </div>
+
+        <div class="list-container">
+            <div class="list-item" onclick="openTPMArea('Area #6200')">
+                <div class="item-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">🔧</div>
+                <div class="item-content">
+                    <h4>Area #6200</h4>
+                    <p>Peralatan & Sistem Unit</p>
+                </div>
+                <svg class="item-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted)">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </div>
+
+            <div class="list-item" onclick="openTPMArea('Area Turbin')">
+                <div class="item-icon" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">⚙️</div>
+                <div class="item-content">
+                    <h4>Area Turbin</h4>
+                    <p>Maintenance Sistem Turbin</p>
+                </div>
+                <svg class="item-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted)">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </div>
+
+            <div class="list-item" onclick="openTPMArea('Area Cooling Tower')">
+                <div class="item-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">🗼</div>
+                <div class="item-content">
+                    <h4>Cooling Tower</h4>
+                    <p>Sistem Pendingin</p>
+                </div>
+                <svg class="item-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted)">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </div>
+
+            <div class="list-item" onclick="openTPMArea('Area Compressor')">
+                <div class="item-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">🌬️</div>
+                <div class="item-content">
+                    <h4>Area Compressor</h4>
+                    <p>Sistem Kompresor</p>
+                </div>
+                <svg class="item-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted)">
+                    <path d="M9 18l6-6-6-6"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div id="tpmInputScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('tpmScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2 id="tpmInputTitle">TPM Check</h2>
+            </div>
+            <div class="user-pill">
+                <span id="tpmInputUser">-</span>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <input type="file" id="tpmCamera" accept="image/*" capture="environment" style="display: none;">
+            
+            <div class="photo-card glass" id="tpmPhotoSection">
+                <div class="photo-preview" id="tpmPhotoPreview" style="height: 200px; background: #1e293b; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <div class="photo-placeholder" style="text-align: center; color: #64748b;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <div>Ambil Foto</div>
+                    </div>
+                </div>
+                <button class="btn btn-camera" onclick="document.getElementById('tpmCamera').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600;">
+                    <span>📷 Buka Kamera</span>
+                </button>
+            </div>
+
+            <div class="form-card glass">
+                <h3 class="form-section-title">Status Kondisi</h3>
+                
+                <div class="status-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px;">
+                    <button class="status-btn" id="btnNormal" onclick="selectTPMStatus('normal')" style="padding: 16px; background: rgba(30, 41, 59, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; cursor: pointer; font-weight: 600;">
+                        <span class="status-dot" style="display: inline-block; width: 12px; height: 12px; background: #10b981; border-radius: 50%; margin-bottom: 4px;"></span>
+                        <div>Normal</div>
+                    </button>
+                    <button class="status-btn" id="btnAbnormal" onclick="selectTPMStatus('abnormal')" style="padding: 16px; background: rgba(30, 41, 59, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; cursor: pointer; font-weight: 600;">
+                        <span class="status-dot" style="display: inline-block; width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; margin-bottom: 4px;"></span>
+                        <div>Abnormal</div>
+                    </button>
+                    <button class="status-btn" id="btnOff" onclick="selectTPMStatus('off')" style="padding: 16px; background: rgba(30, 41, 59, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; cursor: pointer; font-weight: 600;">
+                        <span class="status-dot" style="display: inline-block; width: 12px; height: 12px; background: #ef4444; border-radius: 50%; margin-bottom: 4px;"></span>
+                        <div>Off</div>
+                    </button>
+                </div>
+
+                <div class="form-field" style="margin-bottom: 16px;">
+                    <label for="tpmNotes" style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">Keterangan / Temuan</label>
+                    <textarea id="tpmNotes" rows="3" placeholder="Deskripsikan kondisi area..." style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; resize: vertical; font-family: inherit;"></textarea>
+                </div>
+
+                <div class="form-field">
+                    <label for="tpmAction" style="display: block; margin-bottom: 8px; color: #94a3b8; font-weight: 600;">Tindakan</label>
+                    <select id="tpmAction" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; font-family: inherit;">
+                        <option value="">Pilih tindakan...</option>
+                        <option value="Checking/Routine">Checking/Routine</option>
+                        <option value="Cleaning">Cleaning</option>
+                        <option value="Oiling/Lubrication">Oiling/Lubrication</option>
+                        <option value="Minor Repair">Minor Repair</option>
+                        <option value="Report to Maintenance">Report to Maintenance</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-submit btn-full" onclick="submitTPMData()" style="width: 100%; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);">
+                <span>💾 Simpan Data TPM</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="areaListScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('logsheetSelectScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>Logsheet Turbin</h2>
+                <span class="header-subtitle" id="progressText">0% Complete</span>
+            </div>
+            <div class="user-pill">
+                <span id="areaListUser">-</span>
+            </div>
+        </div>
+
+        <div class="progress-card glass">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 0.875rem; color: #94a3b8;">Overall Progress</span>
+                <span style="font-weight: 700; color: #60a5fa;" id="overallPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg" style="width: 100%; height: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 9999px; overflow: hidden;">
+                <div class="progress-bar-fill" id="overallProgressBar" style="height: 100%; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <div class="areas-list" id="areaList"></div>
+
+        <button class="btn btn-floating" id="submitBtn" onclick="sendToSheet()" style="display:none; position: fixed; bottom: 32px; left: 24px; right: 24px; padding: 16px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4);">
+            <span>📤 Kirim Data Logsheet</span>
+        </button>
+    </div>
+
+    <div id="paramScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="goBack()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="step-badge" style="background: rgba(59, 130, 246, 0.15); padding: 4px 12px; border-radius: 9999px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                <span id="stepInfo" style="font-size: 0.875rem; font-weight: 700; color: #60a5fa;">1/10</span>
+            </div>
+            <div class="user-pill">
+                <span id="paramUser">-</span>
+            </div>
+        </div>
+
+        <div class="param-container">
+            <div class="param-card glass">
+                <div class="param-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span class="param-area" id="currentAreaName" style="font-size: 0.75rem; font-weight: 700; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.05em;">Area</span>
+                    <span class="param-counter" id="areaProgress" style="padding: 4px 12px; background: rgba(30, 41, 59, 0.8); border-radius: 9999px; font-size: 0.875rem; font-weight: 700; color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2);">1/10</span>
+                </div>
+                
+                <h2 class="param-name" id="labelInput" style="font-size: 1.375rem; font-weight: 700; color: #f8fafc; margin-bottom: 24px; line-height: 1.4;">Parameter Name</h2>
+                
+                <div class="input-box" id="mainInputWrapper" style="display: flex; align-items: center; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 16px; overflow: hidden; margin-bottom: 24px; transition: all 0.2s ease;">
+                    <div class="input-field" id="inputFieldContainer" style="flex: 1; padding: 12px 16px;">
+                        <input type="text" id="valInput" inputmode="decimal" placeholder="0.00" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">
+                    </div>
+                    <div class="input-unit" id="unitDisplay" style="padding: 0 16px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; font-weight: 700; font-size: 0.9375rem; border-left: 2px solid rgba(148, 163, 184, 0.2); min-height: 64px; display: flex; align-items: center;">--</div>
+                </div>
+
+                <div class="reference-box" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(30, 41, 59, 0.6); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Nilai Terakhir</span>
+                        <span class="ref-value" id="prevValDisplay" style="display: block; font-size: 1.25rem; font-weight: 700; color: #e2e8f0;">--</span>
+                    </div>
+                    <div class="ref-divider" style="width: 1px; height: 40px; background: rgba(148, 163, 184, 0.2);"></div>
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Update</span>
+                        <span class="ref-value" id="lastTimeLabel" style="display: block; font-size: 1.25rem; font-weight: 700; color: #e2e8f0;">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-abnormal-card" id="statusAbnormalCard" style="margin: 16px 0; padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 16px;">
+                <div class="status-header" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 700; color: #f87171; margin-bottom: 12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Kondisi Parameter</span>
+                </div>
+                
+                <div class="status-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <label class="status-chip" data-status="ERROR" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="paramStatus" value="ERROR" onchange="handleStatusChange(this)" style="display: none;">
+                        <span class="chip-text">⚠️ ERROR</span>
+                    </label>
+                    <label class="status-chip" data-status="UPPER" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="paramStatus" value="UPPER" onchange="handleStatusChange(this)" style="display: none;">
+                        <span class="chip-text">⬆️ UPPER LIMIT</span>
+                    </label>
+                    <label class="status-chip" data-status="NOT_INSTALLED" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="paramStatus" value="NOT_INSTALLED" onchange="handleStatusChange(this)" style="display: none;">
+                        <span class="chip-text">❌ BELUM TERPASANG</span>
+                    </label>
+                </div>
+                
+                <div class="status-note" id="statusNoteContainer" style="display: none; margin-top: 12px;">
+                    <input type="text" id="statusNote" placeholder="Keterangan masalah (opsional)..." style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: white; font-size: 0.875rem; outline: none;">
+                </div>
+            </div>
+
+            <input type="file" id="paramCamera" accept="image/*" capture="environment" style="display: none;">
+            
+            <div class="photo-card glass param-photo-card" id="paramPhotoSection" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                <div class="photo-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span style="font-size: 0.875rem; font-weight: 600;">Foto Validasi</span>
+                    </div>
+                    <span class="photo-badge" id="paramPhotoBadge" style="padding: 4px 12px; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border-radius: 9999px; font-size: 0.6875rem; font-weight: 700;">OPSIONAL</span>
+                </div>
+                <div class="photo-preview" id="paramPhotoPreview" style="height: 160px; background: #1e293b; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                    <div class="photo-placeholder" style="text-align: center; color: #64748b;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <div>Belum ada foto</div>
+                    </div>
+                </div>
+                <button class="btn btn-camera" onclick="document.getElementById('paramCamera').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                    <span>📷 Ambil Foto Parameter</span>
+                </button>
+            </div>
+            
+            <div class="param-dots" id="progressDots" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
+
+            <div class="action-bar" style="display: flex; gap: 12px; margin-top: auto;">
+                <button class="btn btn-secondary" onclick="goBack()" style="flex: 1; padding: 16px; background: rgba(30, 41, 59, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; font-weight: 600;">
+                    <span>Kembali</span>
+                </button>
+                <button class="btn btn-primary btn-flex" onclick="saveStep()" style="flex: 1; padding: 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);">
+                    <span>Simpan & Lanjut</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ctAreaListScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('logsheetSelectScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>Logsheet CT</h2>
+                <span class="header-subtitle" id="ctProgressText">0% Complete</span>
+            </div>
+            <div class="user-pill">
+                <span id="ctAreaListUser">-</span>
+            </div>
+        </div>
+
+        <div class="progress-card glass">
+            <div class="progress-header" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-size: 0.875rem; color: #94a3b8;">Overall Progress</span>
+                <span class="progress-value" id="ctOverallPercent" style="font-weight: 700; color: #06b6d4;">0%</span>
+            </div>
+            <div class="progress-bar-bg" style="width: 100%; height: 8px; background: rgba(148, 163, 184, 0.1); border-radius: 9999px; overflow: hidden;">
+                <div class="progress-bar-fill" id="ctOverallProgressBar" style="height: 100%; background: linear-gradient(90deg, #06b6d4, #22d3ee); width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+
+        <div class="areas-list" id="ctAreaList"></div>
+
+        <button class="btn btn-floating" id="ctSubmitBtn" onclick="sendCTToSheet()" style="display:none; position: fixed; bottom: 32px; left: 24px; right: 24px; padding: 16px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 8px 24px rgba(6, 182, 212, 0.4);">
+            <span>📤 Kirim Data CT</span>
+        </button>
+    </div>
+
+    <div id="ctParamScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="goBackCT()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="step-badge" style="background: rgba(6, 182, 212, 0.15); padding: 4px 12px; border-radius: 9999px; border: 1px solid rgba(6, 182, 212, 0.2);">
+                <span id="ctStepInfo" style="font-size: 0.875rem; font-weight: 700; color: #22d3ee;">1/14</span>
+            </div>
+            <div class="user-pill">
+                <span id="ctParamUser">-</span>
+            </div>
+        </div>
+
+        <div class="param-container">
+            <div class="param-card glass">
+                <div class="param-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <span class="param-area" id="ctCurrentAreaName" style="font-size: 0.75rem; font-weight: 700; color: #22d3ee; text-transform: uppercase; letter-spacing: 0.05em;">Area</span>
+                    <span class="param-counter" id="ctAreaProgress" style="padding: 4px 12px; background: rgba(30, 41, 59, 0.8); border-radius: 9999px; font-size: 0.875rem; font-weight: 700; color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2);">1/14</span>
+                </div>
+                
+                <h2 class="param-name" id="ctLabelInput" style="font-size: 1.375rem; font-weight: 700; color: #f8fafc; margin-bottom: 24px; line-height: 1.4;">Parameter Name</h2>
+                
+                <div class="input-box" id="ctMainInputWrapper" style="display: flex; align-items: center; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 16px; overflow: hidden; margin-bottom: 24px; transition: all 0.2s ease;">
+                    <div class="input-field" id="ctInputFieldContainer" style="flex: 1; padding: 12px 16px;">
+                        <input type="text" id="ctValInput" inputmode="decimal" placeholder="0.00" autocomplete="off" style="width: 100%; background: transparent; border: none; color: #f8fafc; font-size: 1.5rem; font-weight: 700; outline: none;">
+                    </div>
+                    <div class="input-unit" id="ctUnitDisplay" style="padding: 0 16px; background: rgba(6, 182, 212, 0.1); color: #22d3ee; font-weight: 700; font-size: 0.9375rem; border-left: 2px solid rgba(148, 163, 184, 0.2); min-height: 64px; display: flex; align-items: center;">--</div>
+                </div>
+
+                <div class="reference-box" style="display: flex; align-items: center; gap: 12px; padding: 16px; background: rgba(30, 41, 59, 0.6); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2);">
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Nilai Terakhir</span>
+                        <span class="ref-value" id="ctPrevValDisplay" style="display: block; font-size: 1.25rem; font-weight: 700; color: #22d3ee;">--</span>
+                    </div>
+                    <div class="ref-divider" style="width: 1px; height: 40px; background: rgba(148, 163, 184, 0.2);"></div>
+                    <div class="ref-item" style="flex: 1; text-align: center;">
+                        <span class="ref-label" style="display: block; font-size: 0.6875rem; color: #94a3b8; text-transform: uppercase; font-weight: 600; margin-bottom: 4px;">Update</span>
+                        <span class="ref-value" id="ctLastTimeLabel" style="display: block; font-size: 1.25rem; font-weight: 700; color: #e2e8f0;">--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-abnormal-card" id="ctStatusAbnormalCard" style="margin: 16px 0; padding: 16px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 16px;">
+                <div class="status-header" style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 700; color: #22d3ee; margin-bottom: 12px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Kondisi Parameter</span>
+                </div>
+                
+                <div class="status-options" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <label class="status-chip" data-status="ERROR" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="ctParamStatus" value="ERROR" onchange="handleCTStatusChange(this)" style="display: none;">
+                        <span class="chip-text">⚠️ ALAT RUSAK</span>
+                    </label>
+                    <label class="status-chip" data-status="MAINTENANCE" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="ctParamStatus" value="MAINTENANCE" onchange="handleCTStatusChange(this)" style="display: none;">
+                        <span class="chip-text">🔧 MAINTENANCE</span>
+                    </label>
+                    <label class="status-chip" data-status="NOT_INSTALLED" style="display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: rgba(30, 41, 59, 0.8); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 24px; cursor: pointer; font-size: 0.8125rem; color: #94a3b8; font-weight: 500;">
+                        <input type="checkbox" name="ctParamStatus" value="NOT_INSTALLED" onchange="handleCTStatusChange(this)" style="display: none;">
+                        <span class="chip-text">❌ BELUM ADA</span>
+                    </label>
+                </div>
+                
+                <div class="status-note" id="ctStatusNoteContainer" style="display: none; margin-top: 12px;">
+                    <input type="text" id="ctStatusNote" placeholder="Keterangan masalah (opsional)..." style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 8px; color: white; font-size: 0.875rem; outline: none;">
+                </div>
+            </div>
+
+            <input type="file" id="ctParamCamera" accept="image/*" capture="environment" style="display: none;" onchange="handleCTParamPhoto(event)">
+            
+            <div class="photo-card glass param-photo-card" id="ctParamPhotoSection" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
+                <div class="photo-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <span style="font-size: 0.875rem; font-weight: 600;">Foto Validasi CT</span>
+                    </div>
+                    <span class="photo-badge" id="ctParamPhotoBadge" style="padding: 4px 12px; background: rgba(148, 163, 184, 0.15); color: #94a3b8; border-radius: 9999px; font-size: 0.6875rem; font-weight: 700;">OPSIONAL</span>
+                </div>
+                <div class="photo-preview" id="ctParamPhotoPreview" style="height: 160px; background: #1e293b; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                    <div class="photo-placeholder" style="text-align: center; color: #64748b;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom: 8px;">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <div>Belum ada foto</div>
+                    </div>
+                </div>
+                <button class="btn btn-camera" onclick="document.getElementById('ctParamCamera').click()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+                    <span>📷 Ambil Foto Parameter</span>
+                </button>
+            </div>
+            
+            <div class="param-dots" id="ctProgressDots" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
+
+            <div class="action-bar" style="display: flex; gap: 12px; margin-top: auto;">
+                <button class="btn btn-secondary" onclick="goBackCT()" style="flex: 1; padding: 16px; background: rgba(30, 41, 59, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; font-weight: 600;">
+                    <span>Kembali</span>
+                </button>
+                <button class="btn btn-primary btn-flex" onclick="saveCTStep()" style="flex: 1; padding: 16px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; border: none; border-radius: 12px; font-weight: 600; box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);">
+                    <span>Simpan & Lanjut</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="balancingScreen" class="screen">
+        <div class="screen-header glass-header">
+            <button class="btn-icon" onclick="navigateTo('homeScreen')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <div class="header-title-group">
+                <h2>Balancing Power & Steam</h2>
+            </div>
+            <div class="user-pill">
+                <span id="balancingUser">-</span>
+            </div>
+            <div id="draftStatusIndicator" style="display: none; width: 12px; height: 12px; background: #f59e0b; border-radius: 50%; border: 2px solid #0a0f1c; position: absolute; top: 16px; right: 16px;"></div>
+        </div>
+
+        <div class="form-container" style="padding: 12px 16px; padding-bottom: 100px;">
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="info-field">
+                        <label>Tanggal</label>
+                        <input type="date" id="balancingDate" readonly class="auto-field" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.2); background: rgba(15, 23, 42, 0.6); color: white; font-weight: 600;">
+                    </div>
+                    <div class="info-field">
+                        <label>Jam Update</label>
+                        <input type="time" id="balancingTime" readonly class="auto-field" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.2); background: rgba(15, 23, 42, 0.6); color: white; font-weight: 600;">
+                    </div>
+                </div>
+                <div style="margin-top: 16px; text-align: center;">
+                    <span class="shift-badge" id="currentShiftBadge">SHIFT 3</span>
+                    <p style="font-size: 0.875rem; color: #94a3b8; margin-top: 8px;" id="balancingShiftInfo">Shift 3 (23:00 - 07:00)</p>
+                </div>
+            </div>
+
+            <div class="balancing-toolbar" style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button type="button" onclick="loadLastBalancingData(true)" class="btn-history" style="padding: 12px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74-2.74L3 12"/>
+                        <path d="M3 3v9h9"/>
+                    </svg>
+                    <span>Data Terakhir</span>
+                </button>
+
+                <button type="button" onclick="resetBalancingForm()" class="btn-reset" style="padding: 12px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    <span>Reset Form</span>
+                </button>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">⚡ Output Power STG 17,5 MW</h3>
+                <div class="input-grid">
+                    <div class="form-field">
+                        <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Load (MW)</label>
+                        <input type="number" id="loadMW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 1rem; outline: none;">
+                    </div>
+                    <div class="form-field">
+                        <label id="eksporLabel" style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600; transition: color 0.3s;">Ekspor (MW)</label>
+                        <input type="number" id="eksporMW" step="0.001" placeholder="- Ekspor | + Impor" oninput="handleEksporInput(this)" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 1rem; outline: none; transition: all 0.3s;">
+                        <small id="eksporHint" style="display: block; margin-top: 4px; font-size: 0.75rem; color: #94a3b8;">
+                            💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">📊 Balance Power SCADA (MW)</h3>
+                <div class="input-grid three-col">
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">PLN</label><input type="number" id="plnMW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">UBB</label><input type="number" id="ubbMW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">PIE</label><input type="number" id="pieMW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                </div>
+                <div class="input-grid three-col">
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">TG-65</label><input type="number" id="tg65MW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">TG-66</label><input type="number" id="tg66MW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                    <div class="form-field"><label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">GTG</label><input type="number" id="gtgMW" step="0.01" placeholder="0.00" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;"></div>
+                </div>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">🏭 Konsumsi Power 3B</h3>
+                
+                <div class="form-field" style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">SS-6500 (TR-Main 01) (MW)</label>
+                    <input type="number" id="ss6500MW" step="0.001" placeholder="0.000" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 1rem; outline: none;">
+                </div>
+
+                <div class="sub-section" style="background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.15);">
+                    <div class="form-field with-select" style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">SS-2000 Via</label>
+                        <select id="ss2000Via" onchange="toggleSS2000Detail()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.9375rem; outline: none;">
+                            <option value="TR-Main01">TR-Main 01</option>
+                            <option value="HVS65_L02">HVS65 L02</option>
+                        </select>
+                    </div>
+                    
+                    <div id="ss2000Detail" class="nested-inputs" style="border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 16px;">
+                        <div class="input-grid">
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Active Power (MW)</label>
+                                <input type="number" id="activePowerMW" step="0.001" placeholder="0.000" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Reactive Power (MVAR)</label>
+                                <input type="number" id="reactivePowerMVAR" step="0.001" placeholder="0.000" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Current S (A)</label>
+                                <input type="number" id="currentS" step="0.1" placeholder="0.0" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Voltage (V)</label>
+                                <input type="number" id="voltageV" step="1" placeholder="0" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                        </div>
+                        <div class="input-grid" style="margin-top: 12px;">
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">HVS65 L02 (MW)</label>
+                                <input type="number" id="hvs65l02MW" step="0.001" placeholder="0.000" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">HVS65 L02 (A)</label>
+                                <input type="number" id="hvs65l02Current" step="0.1" placeholder="0.0" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-field" style="margin-top: 16px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Total 3B (MW)</label>
+                    <input type="number" id="total3BMW" step="0.001" placeholder="0.000" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 1rem; outline: none;">
+                </div>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">💨 Produksi & Konsumsi Steam</h3>
+                
+                <div class="form-field highlight-field" style="margin-bottom: 16px; padding: 16px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px;">
+                    <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600;">Produksi Steam SA - FQ-1105 (t/h)</label>
+                    <input type="number" id="fq1105" step="0.1" placeholder="0.0" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(59, 130, 246, 0.1); border: 2px solid #3b82f6; color: white; font-size: 1.25rem; font-weight: 700; border-radius: 10px; outline: none;">
+                </div>
+
+                <div class="sub-section" style="background: rgba(15, 23, 42, 0.4); padding: 16px; border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.15);">
+                    <h4 style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 12px; margin-top: 0; font-weight: 600;">Konsumsi Steam 3B (t/h)</h4>
+                    
+                    <div class="input-grid">
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">STG 17,5</label>
+                            <input type="number" id="stgSteam" step="0.1" placeholder="0.0" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">PA2</label>
+                            <input type="number" id="pa2Steam" step="0.1" placeholder="0.0" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                    </div>
+
+                    <div class="input-grid three-col">
+                        <div class="form-field with-select">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Melter SA2</label>
+                            <select id="melterSA2" onchange="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                                <option value="0">0</option>
+                                <option value="5">5</option>
+                                <option value="7.5" selected>7.5</option>
+                            </select>
+                        </div>
+                        <div class="form-field with-select">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Ejector</label>
+                            <select id="ejectorSteam" onchange="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                                <option value="0">0</option>
+                                <option value="2.5" selected>2.5</option>
+                            </select>
+                        </div>
+                        <div class="form-field with-select">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Gland Seal</label>
+                            <select id="glandSealSteam" onchange="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                                <option value="0">0</option>
+                                <option value="1" selected>1</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-grid">
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Puri2</label>
+                            <input type="number" id="puri2Steam" step="0.1" value="1.4" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Deaerator</label>
+                            <input type="number" id="deaeratorSteam" step="0.1" value="2.5" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">Dump Condenser</label>
+                            <input type="number" id="dumpCondenser" step="0.1" value="5.0" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                        <div class="form-field">
+                            <label style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 4px; font-weight: 600;">PCV-6105</label>
+                            <input type="number" id="pcv6105" step="0.1" value="0.0" oninput="calculateLPBalance()" style="width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 10px; color: white; font-size: 0.875rem; outline: none;">
+                        </div>
+                    </div>
+
+                    <div class="calculation-result" style="margin-top: 16px; padding: 16px; background: rgba(59, 130, 246, 0.05); border: 1px dashed #3b82f6; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.875rem; color: #94a3b8; font-weight: 500;">Total Konsumsi:</span>
+                        <span id="totalKonsumsiSteam" style="font-weight: 700; color: #60a5fa; font-size: 1.125rem;">0.0 t/h</span>
+                    </div>
+                </div>
+
+                <div class="form-field calculated-field highlight-impor" id="lpBalanceField" style="margin-top: 16px; padding: 16px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05); transition: all 0.3s ease;">
+                    <label id="lpBalanceLabel" style="display: block; font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; font-weight: 600; text-align: center;">LPS Ekspor ke SU 3A (t/h)</label>
+                    <input type="number" id="lpBalanceValue" step="0.1" readonly style="width: 100%; padding: 14px; background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; color: #10b981; font-weight: 700; font-size: 1.5rem; border-radius: 10px; text-align: center;">
+                    <small id="lpBalanceStatus" style="display: block; margin-top: 8px; color: #10b981; font-size: 0.8125rem; font-weight: 600; text-align: center;">Posisi: Ekspor ke 3A</small>
+                </div>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 16px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">🔍 Monitoring</h3>
+                <div class="monitoring-grid" style="display: flex; flex-direction: column; gap: 16px;">
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Steam Extraction PI-6122 (kg/cm²)</label>
+                        <input type="number" id="pi6122" step="0.01" placeholder="0.00" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none; margin-bottom: 8px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">TI-6112 (°C)</label>
+                        <input type="number" id="ti6112" step="0.1" placeholder="0.0" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                    </div>
+                    
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Temp. Cooling Air Inlet TI-6146/47 (°C)</label>
+                        <input type="number" id="ti6146" step="0.01" placeholder="0.00" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                    </div>
+                    
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Temp. Lube Oil TI-6126 (°C)</label>
+                        <input type="number" id="ti6126" step="0.01" placeholder="0.00" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                    </div>
+                    
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Axial Displacement (mm)</label>
+                        <div class="limit-input" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="number" id="axialDisplacement" step="0.01" placeholder="0.00" style="flex: 1; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            <span class="limit-badge" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">High: 0.6</span>
+                        </div>
+                    </div>
+                    
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Vibrasi VI-6102 (μm)</label>
+                        <div class="limit-input" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="number" id="vi6102" step="0.01" placeholder="0.00" style="flex: 1; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            <span class="limit-badge" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">High: 85</span>
+                        </div>
+                    </div>
+                    
+                    <div class="monitoring-item" style="border-bottom: 1px solid rgba(148, 163, 184, 0.15); padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 8px;">Temp. Journal Bearing TE-6134 (°C)</label>
+                        <div class="limit-input" style="display: flex; gap: 8px; align-items: center;">
+                            <input type="number" id="te6134" step="0.1" placeholder="0.0" style="flex: 1; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            <span class="limit-badge" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 6px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;">High: 115</span>
+                        </div>
+                    </div>
+
+                    <div class="monitoring-item" style="padding-bottom: 12px;">
+                        <label style="display: block; font-size: 0.8125rem; color: #94a3b8; font-weight: 600; margin-bottom: 12px;">Cooling Tower (Fan/Pompa)</label>
+                        <div class="input-grid two-col" style="margin-bottom: 8px;">
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">CT SU Fan</label>
+                                <input type="number" id="ctSuFan" value="4" min="0" max="10" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">CT SU Pompa</label>
+                                <input type="number" id="ctSuPompa" value="2" min="0" max="10" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            </div>
+                        </div>
+                        <div class="input-grid two-col">
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">CT SA Fan</label>
+                                <input type="number" id="ctSaFan" value="3" min="0" max="10" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            </div>
+                            <div class="form-field">
+                                <label style="display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 4px;">CT SA Pompa</label>
+                                <input type="number" id="ctSaPompa" value="2" min="0" max="10" style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 8px; color: white; outline: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card glass" style="margin-bottom: 24px; padding: 20px;">
+                <h3 style="font-size: 1.0625rem; font-weight: 700; margin-bottom: 16px; color: #f8fafc;">📝 Kegiatan Shift <span id="kegiatanShiftNum">3</span></h3>
+                <div class="form-field">
+                    <textarea id="kegiatanShift" rows="4" placeholder="Catat anomali, start/stop equipment, instruksi Asman, dll..." style="width: 100%; padding: 16px; background: rgba(15, 23, 42, 0.6); border: 2px solid rgba(148, 163, 184, 0.2); border-radius: 12px; color: white; resize: vertical; font-family: inherit; outline: none;"></textarea>
+                </div>
+            </div>
+
+            <button class="btn btn-submit btn-full" onclick="submitBalancingData()" style="width: 100%; padding: 18px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 1.0625rem; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>Kirim via WA & Simpan</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="uploadProgressOverlay" class="upload-overlay hidden" style="position: fixed; inset: 0; background: rgba(10, 15, 28, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 10005;">
+        <div class="upload-content" style="text-align: center; padding: 32px; max-width: 320px; width: 100%;">
+            <div class="progress-ring-container" style="position: relative; width: 120px; height: 120px; margin: 0 auto 24px;">
+                <svg class="progress-ring" width="120" height="120" style="transform: rotate(-90deg);">
+                    <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(148, 163, 184, 0.15)" stroke-width="6"/>
+                    <circle id="uploadProgressRing" cx="60" cy="60" r="54" fill="none" stroke="#3b82f6" stroke-width="6" stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292" style="transition: stroke-dashoffset 0.3s ease;"/>
+                </svg>
+                <div class="progress-percentage" id="uploadProgressPercent" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.5rem; font-weight: 700; color: #f8fafc;">0%</div>
+            </div>
+            
+            <div class="upload-status">
+                <h3 id="uploadProgressText" style="font-size: 1.125rem; font-weight: 700; color: #f8fafc; margin-bottom: 16px;">Mengirim Data...</h3>
+                <div class="upload-steps" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <div class="step active" id="step1" style="display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 1;">
+                        <div class="step-icon" style="width: 28px; height: 28px; border-radius: 50%; background: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: white;">1</div>
+                        <span style="font-size: 0.6875rem; color: #94a3b8;">Menyiapkan</span>
+                    </div>
+                    <div class="step-line" id="stepLine1" style="width: 30px; height: 2px; background: rgba(148, 163, 184, 0.2);"></div>
+                    <div class="step" id="step2" style="display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.4;">
+                        <div class="step-icon" style="width: 28px; height: 28px; border-radius: 50%; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; border: 2px solid rgba(148, 163, 184, 0.2);">2</div>
+                        <span style="font-size: 0.6875rem; color: #94a3b8;">Mengirim</span>
+                    </div>
+                    <div class="step-line" id="stepLine2" style="width: 30px; height: 2px; background: rgba(148, 163, 184, 0.2);"></div>
+                    <div class="step" id="step3" style="display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0.4;">
+                        <div class="step-icon" style="width: 28px; height: 28px; border-radius: 50%; background: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; border: 2px solid rgba(148, 163, 184, 0.2);">3</div>
+                        <span style="font-size: 0.6875rem; color: #94a3b8;">Selesai</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="cancelUploadBtn" class="btn btn-secondary btn-full" onclick="cancelUpload()" style="display: none; margin-top: 24px; width: 100%; padding: 14px; background: rgba(30, 41, 59, 0.8); color: #e2e8f0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; font-weight: 600;">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/users.js"></script>
+<script src="js/logsheet.js"></script>
+<script src="js/tpm.js"></script>
+<script src="js/balancing.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const originalNavigateTo = window.navigateTo;
+        window.navigateTo = function(screenId) {
+            if (screenId === 'logsheetSelectScreen' && typeof currentUser !== 'undefined' && currentUser) {
+                const userEl = document.getElementById('logsheetSelectUser');
+                if (userEl) userEl.textContent = currentUser.name || currentUser.username;
+            }
+            if (typeof originalNavigateTo === 'function') {
+                originalNavigateTo(screenId);
+            } else {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                const target = document.getElementById(screenId);
+                if (target) target.classList.add('active');
+                window.scrollTo(0, 0);
+            }
+        };
+    });
+</script>
 </body>
 </html>
