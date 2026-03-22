@@ -1,23 +1,21 @@
+/* ============================================
+   TURBINE LOGSHEET PRO - CONFIGURATION
+   ============================================ */
+
 // ============================================
-// CONFIGURATION - TURBINE LOGSHEET PRO
+// 1. APP CONFIGURATION
 // ============================================
-// Versi ini digunakan untuk sinkronisasi Service Worker dan UI
-const APP_VERSION = '2.0.0'; 
+const APP_VERSION = '1.9.2';
 const APP_NAME = 'Turbine Logsheet Pro';
 
-// URL Google Apps Script Backend (Ganti dengan URL Deployment Anda)
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxkii8_DcNdqoiRfRdurkU6qODAQrhSUneLF29YrxYLNa9RC-Cz2ofnPcfywprTvGZH/exec";
-
-// Konfigurasi Autentikasi
 const AUTH_CONFIG = {
     SESSION_KEY: 'turbine_session',
     USER_KEY: 'turbine_user',
     USERS_CACHE_KEY: 'turbine_users_cache',
-    SESSION_DURATION: 8 * 60 * 60 * 1000,        // Sesi aktif 8 jam
-    REMEMBER_ME_DURATION: 30 * 24 * 60 * 60 * 1000  // Ingat saya 30 hari
+    SESSION_DURATION: 8 * 60 * 60 * 1000,           // 8 jam
+    REMEMBER_ME_DURATION: 30 * 24 * 60 * 60 * 1000  // 30 hari
 };
 
-// Kunci Penyimpanan LocalStorage (Draft & Offline)
 const DRAFT_KEYS = {
     LOGSHEET: 'draft_turbine',
     LOGSHEET_BACKUP: 'draft_turbine_backup',
@@ -39,8 +37,35 @@ const PHOTO_DRAFT_KEYS = {
     CT: 'draft_ct_photos'
 };
 
+// URL Google Apps Script Backend
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwQi2_FjAH6rLX3oKeZ7JJbftMiU99NYKhEzfPxPQ_68RHJDMKxaPVyqVDbWbbk46T_/exec";
+
+// Fallback users untuk mode offline (legacy support)
+const OFFLINE_USERS = {
+    'admin': { password: 'admin123', role: 'admin', name: 'Administrator', department: 'Unit Utilitas 3B' },
+    'operator': { password: 'operator123', role: 'operator', name: 'Operator Shift', department: 'Unit Utilitas 3B' },
+    'utilitas3b': { password: 'pgresik2024', role: 'operator', name: 'Unit Utilitas 3B', department: 'Unit Utilitas 3B' }
+};
+
+// Field configuration untuk Balancing
+const BALANCING_FIELDS = [
+    'balancingDate', 'balancingTime',
+    'loadMW', 'eksporMW',
+    'plnMW', 'ubbMW', 'pieMW', 'tg65MW', 'tg66MW', 'gtgMW',
+    'ss6500MW', 'ss2000Via', 'activePowerMW', 'reactivePowerMVAR', 
+    'currentS', 'voltageV', 'hvs65l02MW', 'hvs65l02Current', 'total3BMW',
+    'fq1105',
+    'stgSteam', 'pa2Steam', 'puri2Steam', 'melterSA2', 
+    'ejectorSteam', 'glandSealSteam', 'deaeratorSteam', 
+    'dumpCondenser', 'pcv6105',
+    'pi6122', 'ti6112', 'ti6146', 'ti6126', 
+    'axialDisplacement', 'vi6102', 'te6134',
+    'ctSuFan', 'ctSuPompa', 'ctSaFan', 'ctSaPompa',
+    'kegiatanShift'
+];
+
 // ============================================
-// DATA STRUKTUR AREA & PARAMETER
+// 2. DATA STRUKTUR AREA
 // ============================================
 
 // Struktur Area Turbine Logsheet
@@ -209,29 +234,15 @@ const AREAS_CT = {
     ]
 };
 
-// Mapping Tipe Input Khusus (Status Pompa/Mesin)
 const INPUT_TYPES = {
     PUMP_STATUS: {
-        patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)', '(A/M)'],
+        patterns: ['(A/B)', '(ON/OFF)', '(On/Off)', '(Running/Stop)', '(Remote/Running/Stop)'],
         options: {
-            '(A/B)': ['A', 'B', 'AB'],
+            '(A/B)': ['A', 'B'],
             '(ON/OFF)': ['ON', 'OFF'],
             '(On/Off)': ['On', 'Off'],
             '(Running/Stop)': ['Running', 'Stop'],
-            '(Remote/Running/Stop)': ['Remote', 'Running', 'Stop'],
-            '(A/M)': ['Auto', 'Manual']
+            '(Remote/Running/Stop)': ['Remote', 'Running', 'Stop']
         }
     }
 };
-
-// Field untuk Form Balancing
-const BALANCING_FIELDS = [
-    'balancingDate', 'balancingTime', 'loadMW', 'eksporMW',
-    'plnMW', 'ubbMW', 'pieMW', 'tg65MW', 'tg66MW', 'gtgMW',
-    'ss6500MW', 'ss2000Via', 'activePowerMW', 'reactivePowerMVAR', 
-    'currentS', 'voltageV', 'hvs65l02MW', 'hvs65l02Current', 'total3BMW',
-    'fq1105', 'stgSteam', 'pa2Steam', 'puri2Steam', 'melterSA2', 
-    'ejectorSteam', 'glandSealSteam', 'deaeratorSteam', 'dumpCondenser', 'pcv6105',
-    'pi6122', 'ti6112', 'ti6146', 'ti6126', 'axialDisplacement', 'vi6102', 'te6134',
-    'ctSuFan', 'ctSuPompa', 'ctSaFan', 'ctSaPompa', 'kegiatanShift'
-];
