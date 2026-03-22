@@ -1,177 +1,255 @@
+/* ============================================
+   TURBINE LOGSHEET PRO - TPM MODULE
+   ============================================ */
+
 // ============================================
-// TPM MODULE - TURBINE LOGSHEET PRO
+// 1. UI & INITIALIZATION
 // ============================================
 
-let tpmTasks = [];
-let tpmDraft = {};
+function updateTPMUserInfo() {
+    const tpmHeaderUser = document.getElementById('tpmHeaderUser');
+    const tpmInputUser = document.getElementById('tpmInputUser');
+    
+    // currentUser berasal dari state.js
+    if (tpmHeaderUser) tpmHeaderUser.textContent = currentUser?.name || 'Operator';
+    if (tpmInputUser) tpmInputUser.textContent = currentUser?.name || 'Operator';
+}
 
-/**
- * Inisialisasi Layar TPM
- */
-function initTPMScreen() {
+function openTPMArea(areaName) {
     if (!requireAuth()) return;
     
-    // Ambil data draft TPM dari localStorage
-    const savedDraft = localStorage.getItem(DRAFT_KEYS.TPM_OFFLINE);
-    tpmDraft = savedDraft ? JSON.parse(savedDraft) : {};
+    // Reset state TPM (variabel dari state.js)
+    activeTPMArea = areaName;
+    currentTPMPhoto = null;
+    currentTPMStatus = '';
     
-    navigateTo('tpmScreen');
-    renderTPMSections();
+    resetTPMForm();
+    
+    const title = document.getElementById('tpmInputTitle');
+    if (title) title.textContent = areaName;
+    
+    updateTPMUserInfo();
+    navigateTo('tpmInputScreen');
 }
 
-/**
- * Merender Daftar Seksi TPM (Clean, Check, Tighten, Lub)
- */
-function renderTPMSections() {
-    const container = document.getElementById('tpmContainer');
-    if (!container) return;
-
-    // Struktur Tugas TPM (Bisa dipindahkan ke config.js jika ingin lebih dinamis)
-    const sections = {
-        "CLEANING": ["Body Turbine", "Baseplate", "Panel Control", "Lube Oil Console"],
-        "CHECKING": ["Level Oil", "Leakage", "Vibration Local", "Pressure Gauge"],
-        "LUBRICATING": ["Bearing Grease", "Linkage Governor"]
-    };
-
-    let html = '';
-    Object.entries(sections).forEach(([sectionName, tasks]) => {
-        const completedCount = tasks.filter(t => tpmDraft[t]?.status === 'done').length;
-        
-        html += `
-            <div class="tpm-section-card glass">
-                <div class="tpm-section-header">
-                    <h3>${sectionName}</h3>
-                    <span class="badge">${completedCount}/${tasks.length}</span>
-                </div>
-                <div class="tpm-task-list">
-                    ${tasks.map(task => renderTaskItem(task)).join('')}
-                </div>
+function resetTPMForm() {
+    const preview = document.getElementById('tpmPhotoPreview');
+    const photoSection = document.getElementById('tpmPhotoSection');
+    
+    if (preview) {
+        preview.innerHTML = `
+            <div class="photo-placeholder">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                <span>Ambil Foto</span>
             </div>
         `;
-    });
-
-    container.innerHTML = html;
-}
-
-/**
- * Merender Item Tugas Individu
- */
-function renderTaskItem(taskName) {
-    const data = tpmDraft[taskName] || { status: 'pending', photo: null };
-    const isDone = data.status === 'done';
-
-    return `
-        <div class="tpm-task-item ${isDone ? 'completed' : ''}">
-            <div class="task-info">
-                <span class="task-name">${taskName}</span>
-                ${data.photo ? '<span class="photo-tag">📸 Foto OK</span>' : ''}
-            </div>
-            <div class="task-actions">
-                <button class="btn-icon btn-camera" onclick="openTPMCamera('${taskName}')">
-                    ${data.photo ? '🔄' : '📷'}
-                </button>
-                <input type="checkbox" ${isDone ? 'checked' : ''} 
-                       onchange="toggleTPMTask('${taskName}', this.checked)">
-            </div>
-        </div>
-    `;
-}
-
-/**
- * Mengubah Status Tugas TPM
- */
-function toggleTPMTask(taskName, isChecked) {
-    if (!tpmDraft[taskName]) tpmDraft[taskName] = {};
+    }
     
-    tpmDraft[taskName].status = isChecked ? 'done' : 'pending';
-    saveTPMDraft();
-    renderTPMSections();
+    if (photoSection) photoSection.classList.remove('has-photo');
+    
+    const notes = document.getElementById('tpmNotes');
+    const action = document.getElementById('tpmAction');
+    if (notes) notes.value = '';
+    if (action) action.value = '';
+    
+    resetTPMStatusButtons();
 }
 
-/**
- * Manajemen Kamera & Kompresi Foto TPM
- */
-function openTPMCamera(taskName) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'environment'; // Langsung buka kamera belakang di HP
+function resetTPMStatusButtons() {
+    ['btnNormal', 'btnAbnormal', 'btnOff'].forEach((id) => {
+        const btn = document.getElementById(id);
+        if (btn) btn.className = 'status-btn';
+    });
+}
 
-    input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const progress = showUploadProgress('Memproses Foto TPM...');
-        try {
-            // Gunakan helper dari ui-utils.js untuk kompresi
-            const compressedBase64 = await compressImage(file, { maxWidth: 800, quality: 0.7 });
-            
-            if (!tpmDraft[taskName]) tpmDraft[taskName] = {};
-            tpmDraft[taskName].photo = compressedBase64;
-            tpmDraft[taskName].status = 'done'; // Foto otomatis menandai tugas selesai
-            
-            saveTPMDraft();
-            progress.complete();
-            renderTPMSections();
-            showCustomAlert('Foto berhasil disimpan ke draft', 'success');
-        } catch (err) {
-            progress.error();
-            showCustomAlert('Gagal memproses foto', 'error');
-        }
+function selectTPMStatus(status) {
+    currentTPMStatus = status; // Simpan ke state global
+    resetTPMStatusButtons();
+    
+    const buttonMap = {
+        'normal': { id: 'btnNormal', class: 'active-normal' },
+        'abnormal': { id: 'btnAbnormal', class: 'active-abnormal' },
+        'off': { id: 'btnOff', class: 'active-off' }
     };
-
-    input.click();
+    
+    const selected = buttonMap[status];
+    if (selected) {
+        const btn = document.getElementById(selected.id);
+        if (btn) btn.classList.add(selected.class);
+    }
+    
+    if ((status === 'abnormal' || status === 'off') && !currentTPMPhoto) {
+        setTimeout(() => {
+            showCustomAlert('⚠️ Kondisi abnormal/off wajib didokumentasikan dengan foto!', 'warning');
+        }, 100);
+    }
 }
 
-/**
- * Simpan Draft ke LocalStorage
- */
-function saveTPMDraft() {
-    localStorage.setItem(DRAFT_KEYS.TPM_OFFLINE, JSON.stringify(tpmDraft));
-}
+// ============================================
+// 2. PHOTO HANDLING & COMPRESSION
+// ============================================
 
-/**
- * Kirim Data TPM ke Server
- */
-async function sendTPMToSheet() {
-    const tasks = Object.keys(tpmDraft);
-    if (tasks.length === 0) {
-        showCustomAlert('Belum ada tugas yang dikerjakan', 'warning');
+async function handleTPMPhoto(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Validasi ukuran awal (max 10MB untuk raw file)
+    if (file.size > 10 * 1024 * 1024) {
+        showCustomAlert('Ukuran file terlalu besar (>10MB). Pilih foto lain.', 'error');
+        event.target.value = '';
+        return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+        showCustomAlert('File harus berupa gambar.', 'error');
+        event.target.value = '';
         return;
     }
 
-    const progress = showUploadProgress('Mengirim Laporan TPM...');
-    
-    const payload = {
-        type: 'TPM_REPORT',
-        operator: currentUser.name,
-        unit: 'Utility 3B',
-        timestamp: new Date().toISOString(),
-        data: tpmDraft
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const originalDataUrl = e.target.result;
+        
+        // Show loading compression
+        showCustomAlert('🔄 Mengkompresi foto TPM...', 'info');
+        
+        try {
+            // Kompresi dengan parameter optimal untuk dokumentasi TPM (Fungsi di utils.js)
+            const result = await compressImage(originalDataUrl, {
+                maxWidth: 1600,      // Resolusi cukup untuk dokumentasi equipment
+                maxHeight: 1600,
+                quality: 0.8,        // Balance kualitas & ukuran
+                type: 'image/jpeg'
+            });
+            
+            currentTPMPhoto = result.dataUrl; // Simpan ke state global
+            
+            const preview = document.getElementById('tpmPhotoPreview');
+            const photoSection = document.getElementById('tpmPhotoSection');
+            
+            if (preview) {
+                // Preview dengan badge ukuran
+                preview.innerHTML = `
+                    <div style="position: relative; width: 100%; height: 100%;">
+                        <img src="${currentTPMPhoto}" 
+                             style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" 
+                             alt="TPM Photo">
+                        <div style="position: absolute; top: 8px; right: 8px; 
+                                    background: rgba(16, 185, 129, 0.9); color: white; 
+                                    padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; 
+                                    font-weight: 600; backdrop-filter: blur(4px);">
+                            ${result.compressedSize}KB ↓${result.reduction}%
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (photoSection) photoSection.classList.add('has-photo');
+            
+            // Log hasil kompresi
+            console.log(`[TPM COMPRESSION] ${result.originalSize}KB → ${result.compressedSize}KB (-${result.reduction}%)`);
+            
+            showCustomAlert(
+                `✓ Foto TPM dikompresi: ${result.originalSize}KB → ${result.compressedSize}KB`, 
+                'success'
+            );
+            
+        } catch (error) {
+            console.error('Kompresi TPM gagal:', error);
+            
+            // Fallback: gunakan original tanpa kompresi
+            currentTPMPhoto = originalDataUrl;
+            
+            const preview = document.getElementById('tpmPhotoPreview');
+            const photoSection = document.getElementById('tpmPhotoSection');
+            
+            if (preview) {
+                preview.innerHTML = `
+                    <img src="${currentTPMPhoto}" 
+                         style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;" 
+                         alt="TPM Photo">
+                `;
+            }
+            if (photoSection) photoSection.classList.add('has-photo');
+            
+            showCustomAlert('⚠️ Foto disimpan tanpa kompresi', 'warning');
+        }
     };
+    
+    reader.onerror = function() {
+        showCustomAlert('Gagal membaca file foto.', 'error');
+    };
+    
+    reader.readAsDataURL(file);
+    event.target.value = ''; // Reset input
+}
 
+// ============================================
+// 3. SUBMIT DATA TO SERVER
+// ============================================
+
+async function submitTPMData() {
+    if (!requireAuth()) return;
+    
+    const notes = document.getElementById('tpmNotes')?.value.trim() || '';
+    const action = document.getElementById('tpmAction')?.value || '';
+    
+    if (!currentTPMStatus) {
+        showCustomAlert('Pilih status kondisi!', 'error');
+        return;
+    }
+    
+    if (!currentTPMPhoto) {
+        showCustomAlert('Ambil foto dokumentasi!', 'error');
+        return;
+    }
+    
+    console.log('Preparing TPM data...');
+    console.log('Area:', activeTPMArea);
+    
+    // showUploadProgress ada di main.js
+    const progress = showUploadProgress('Mengupload TPM...');
+    
+    const tpmData = {
+        type: 'TPM',
+        area: activeTPMArea,
+        status: currentTPMStatus,
+        action: action,
+        notes: notes,
+        photo: currentTPMPhoto,
+        user: currentUser?.name || 'Unknown',
+        timestamp: new Date().toISOString()
+    };
+    
     try {
-        await fetch(GAS_URL, {
+        const response = await fetch(GAS_URL, {
             method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload)
+            mode: 'no-cors', // Penting untuk Google Apps Script
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tpmData)
         });
-
+        
         progress.complete();
-        showCustomAlert('✓ Laporan TPM Berhasil Terkirim!', 'success');
+        showCustomAlert('✓ Data TPM berhasil disimpan!', 'success');
         
-        // Bersihkan draft
-        tpmDraft = {};
-        localStorage.removeItem(DRAFT_KEYS.TPM_OFFLINE);
+        // Reset State
+        currentTPMPhoto = null;
+        currentTPMStatus = '';
         
-        setTimeout(() => navigateTo('homeScreen'), 1500);
+        setTimeout(() => navigateTo('tpmScreen'), 1500);
+        
     } catch (error) {
+        console.error('TPM Submit Error:', error);
         progress.error();
-        // Simpan ke antrean offline jika gagal kirim
-        let queue = JSON.parse(localStorage.getItem(DRAFT_KEYS.TPM_HISTORY) || '[]');
-        queue.push(payload);
-        localStorage.setItem(DRAFT_KEYS.TPM_HISTORY, JSON.stringify(queue));
         
-        showCustomAlert('Koneksi tidak stabil. Data TPM disimpan offline.', 'warning');
+        // Simpan offline jika gagal
+        let offlineTPM = JSON.parse(localStorage.getItem(DRAFT_KEYS.TPM_OFFLINE) || '[]');
+        offlineTPM.push(tpmData);
+        localStorage.setItem(DRAFT_KEYS.TPM_OFFLINE, JSON.stringify(offlineTPM));
+        
+        showCustomAlert('Gagal upload. Data disimpan lokal.', 'error');
     }
 }
