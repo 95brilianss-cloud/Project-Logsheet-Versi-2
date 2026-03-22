@@ -367,6 +367,14 @@ window.addEventListener('DOMContentLoaded', () => {
     
     // 5. Hilangkan Loading Screen
     simulateLoading();
+
+   // Tambahkan fungsi ini di js/main.js untuk menangani perpindahan layar
+function goToLogsheetTurbin() {
+    navigateTo('areaListScreen');
+    if (typeof renderMenu === 'function') {
+        renderMenu(); // Memanggil fungsi dari logsheet.js
+    }
+}
     
     console.log(`${APP_NAME} v${APP_VERSION} initialized successfully`);
 });
