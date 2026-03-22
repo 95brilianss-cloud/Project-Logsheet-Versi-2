@@ -1,245 +1,221 @@
 /* ============================================
-   TURBINE LOGSHEET PRO - UTILITIES & HELPERS
+   TURBINE LOGSHEET PRO - FRONTEND UTILITIES
+   FILE: js/utils.js (UI Helpers & Modifiers)
    ============================================ */
 
 // ============================================
 // 1. CUSTOM ALERTS & TOASTS
 // ============================================
 
-function showCustomAlert(msg, type = 'success') {
-    const customAlert = document.getElementById('customAlert');
-    const alertContent = document.getElementById('alertContent');
+function showCustomAlert(message, type = 'info') {
+    const alertBox = document.getElementById('customAlert');
     const alertTitle = document.getElementById('alertTitle');
     const alertMessage = document.getElementById('alertMessage');
-    const alertIconWrapper = document.getElementById('alertIconWrapper');
-    
-    if (!customAlert || !alertContent || !alertTitle || !alertMessage || !alertIconWrapper) {
-        console.error('Alert elements not found');
-        alert(msg);
+    const iconWrapper = document.getElementById('alertIconWrapper');
+
+    if (!alertBox || !alertMessage) {
+        alert(message); // Fallback bawaan browser jika UI belum siap
         return;
     }
+
+    alertMessage.textContent = message;
     
-    // Clear existing timer if any
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
+    // Ganti warna & icon berdasarkan tipe notifikasi
+    if (type === 'success') {
+        alertTitle.textContent = 'Berhasil';
+        alertTitle.style.color = '#f8fafc';
+        if (iconWrapper) {
+            iconWrapper.innerHTML = `
+                <svg viewBox="0 0 52 52" style="stroke: #10b981; stroke-width: 3; fill: none; width: 100%; height: 100%;">
+                    <circle cx="26" cy="26" r="25"/>
+                    <path d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>`;
+        }
+    } else if (type === 'error') {
+        alertTitle.textContent = 'Gagal';
+        alertTitle.style.color = '#ef4444';
+        if (iconWrapper) {
+            iconWrapper.innerHTML = `<div style="color: #ef4444; font-size: 40px; line-height: 1.2;">⚠️</div>`;
+        }
+    } else if (type === 'warning') {
+        alertTitle.textContent = 'Perhatian';
+        alertTitle.style.color = '#f59e0b';
+        if (iconWrapper) {
+            iconWrapper.innerHTML = `<div style="color: #f59e0b; font-size: 40px; line-height: 1.2;">⚠️</div>`;
+        }
+    } else {
+        alertTitle.textContent = 'Informasi';
+        alertTitle.style.color = '#3b82f6';
+        if (iconWrapper) {
+            iconWrapper.innerHTML = `<div style="color: #3b82f6; font-size: 40px; line-height: 1.2;">ℹ️</div>`;
+        }
     }
-    
-    const titleMap = {
-        'success': 'Berhasil',
-        'error': 'Error',
-        'warning': 'Peringatan',
-        'info': 'Informasi'
-    };
-    
-    alertTitle.textContent = titleMap[type] || 'Informasi';
-    alertMessage.innerText = msg;
-    alertContent.className = 'alert-content ' + type;
-    
-    // Set icon berdasarkan tipe
-    const icons = {
-        success: `<div class="alert-icon-bg"></div><svg class="alert-icon-svg" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25"/><path d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>`,
-        error: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #ef4444"><circle cx="26" cy="26" r="25"/><path d="M16 16 L36 36 M36 16 L16 36"/></svg>`,
-        warning: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #f59e0b"><circle cx="26" cy="26" r="25"/><path d="M26 10 L26 30 M26 34 L26 38"/></svg>`,
-        info: `<div class="alert-icon-bg" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"></div><svg class="alert-icon-svg" viewBox="0 0 52 52" style="stroke: #3b82f6"><circle cx="26" cy="26" r="25"/><path d="M26 10 L26 30 M26 34 L26 36"/></svg>`
-    };
-    
-    alertIconWrapper.innerHTML = icons[type] || icons.info;
-    customAlert.classList.remove('hidden');
-    
-    // Auto close untuk sukses dan info
-    if (type === 'success' || type === 'info') {
-        autoCloseTimer = setTimeout(() => {
-            if (!customAlert.classList.contains('hidden')) closeAlert();
-        }, 3000);
-    }
+
+    alertBox.classList.remove('hidden');
 }
 
 function closeAlert() {
-    const customAlert = document.getElementById('customAlert');
-    if (customAlert) customAlert.classList.add('hidden');
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
-    }
+    const alertBox = document.getElementById('customAlert');
+    if (alertBox) alertBox.classList.add('hidden');
 }
 
-function showToast(msg, type = 'info') {
-    // Digunakan secara umum untuk PWA & System Logging
-    console.log(`[${type.toUpperCase()}] ${msg}`);
+// Alias untuk showCustomAlert
+function showToast(message, type) {
+    showCustomAlert(message, type); 
 }
 
 // ============================================
-// 2. SCREEN NAVIGATION (ROUTER)
+// 2. UPLOAD PROGRESS OVERLAY (LOADING SCREEN)
 // ============================================
 
-function navigateTo(screenId) {
-    // Daftar screen yang wajib login
-    const protectedScreens = [
-        'homeScreen', 'areaListScreen', 'paramScreen', 
-        'tpmScreen', 'tpmInputScreen', 'balancingScreen', 
-        'ctAreaListScreen', 'ctParamScreen'
-    ];
+function showUploadProgress(initialText = 'Mengirim...') {
+    const overlay = document.getElementById('uploadProgressOverlay');
+    const textEl = document.getElementById('uploadProgressText');
+    const percentEl = document.getElementById('uploadProgressPercent');
     
-    // Pengecekan sesi (fungsi requireAuth ada di auth.js)
-    if (protectedScreens.includes(screenId) && typeof requireAuth === 'function' && !requireAuth()) {
-        return;
+    // Support dua kemungkinan ID dari versi HTML lama/baru
+    const ringFill = document.getElementById('progressRingFill') || document.getElementById('uploadProgressRing');
+    const cancelBtn = document.getElementById('cancelUploadBtn');
+    
+    if (overlay) overlay.classList.remove('hidden');
+    if (textEl) textEl.textContent = initialText;
+    if (percentEl) percentEl.textContent = '0%';
+    if (ringFill) ringFill.style.strokeDashoffset = '339.292'; // Reset animasi ring
+    if (cancelBtn) cancelBtn.style.display = 'block';
+
+    // Reset status steps (1. Menyiapkan, 2. Mengirim, 3. Selesai)
+    document.querySelectorAll('.step').forEach(el => {
+        el.classList.remove('active');
+        el.style.opacity = '0.4';
+    });
+    
+    const step1 = document.getElementById('step1');
+    if (step1) {
+        step1.classList.add('active');
+        step1.style.opacity = '1';
     }
-    
-    // Sembunyikan semua screen
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    // Tampilkan screen target
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.classList.add('active');
-        window.scrollTo(0, 0);
+
+    // Animasi Progress Bar Palsu (untuk UX visual agar tidak kaku saat nunggu respon Google)
+    let fakeProgress = 0;
+    const progressInterval = setInterval(() => {
+        fakeProgress += Math.random() * 15;
+        if (fakeProgress > 90) fakeProgress = 90; // Mentok di 90% sampai server benar-benar merespon
         
-        // Trigger Inisialisasi Spesifik Layar (Fungsi-fungsinya ada di modul lain)
-        if (screenId === 'homeScreen') {
-            if(typeof loadUserStats === 'function') loadUserStats();
-            if(typeof loadTodayJobs === 'function') loadTodayJobs(); 
-            setTimeout(() => {
-                if(typeof updateAdminBranchVisibility === 'function') updateAdminBranchVisibility();           
-            }, 100);
-        } else if (screenId === 'areaListScreen') {
-            if(typeof fetchLastData === 'function') fetchLastData();
-            if(typeof updateOverallProgress === 'function') updateOverallProgress();
-        } else if (screenId === 'balancingScreen') {
-            if(typeof initBalancingScreen === 'function') initBalancingScreen();
-        } else if (screenId === 'ctAreaListScreen') {
-            if(typeof fetchLastDataCT === 'function') fetchLastDataCT();
-            if(typeof updateCTOverallProgress === 'function') updateCTOverallProgress();
+        if (percentEl) percentEl.textContent = Math.round(fakeProgress) + '%';
+        if (ringFill) {
+            const offset = 339.292 - (fakeProgress / 100) * 339.292;
+            ringFill.style.strokeDashoffset = offset;
         }
+    }, 500);
+
+    // Kembalikan objek fungsi agar tpm.js dan logsheet.js bisa mengontrol animasi ini
+    return {
+        updateText: (text) => {
+            if (textEl) textEl.textContent = text;
+            const step2 = document.getElementById('step2');
+            if (step2) {
+                step2.classList.add('active');
+                step2.style.opacity = '1';
+            }
+        },
+        complete: () => {
+            clearInterval(progressInterval);
+            if (percentEl) percentEl.textContent = '100%';
+            if (ringFill) ringFill.style.strokeDashoffset = '0';
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            
+            const step3 = document.getElementById('step3');
+            if (step3) {
+                step3.classList.add('active');
+                step3.style.opacity = '1';
+            }
+            
+            // Tutup overlay otomatis setelah 1 detik
+            setTimeout(() => {
+                if (overlay) overlay.classList.add('hidden');
+            }, 1000);
+        },
+        error: () => {
+            clearInterval(progressInterval);
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            if (overlay) overlay.classList.add('hidden');
+        }
+    };
+}
+
+function cancelUpload() {
+    // Fungsi untuk membatalkan proses fetch (request ke server)
+    if (typeof currentUploadController !== 'undefined' && currentUploadController) {
+        currentUploadController.abort();
+        showCustomAlert('Proses pengiriman dibatalkan oleh operator.', 'warning');
     }
+    const overlay = document.getElementById('uploadProgressOverlay');
+    if (overlay) overlay.classList.add('hidden');
 }
 
 // ============================================
-// 3. IMAGE COMPRESSION UTILITY
+// 3. IMAGE COMPRESSION (CLIENT-SIDE)
 // ============================================
 
-async function compressImage(base64Image, options = {}) {
-    const {
-        maxWidth = 1920,
-        maxHeight = 1920,
-        quality = 0.8,
-        type = 'image/jpeg'
-    } = options;
-
+function compressImage(dataUrl, options = {}) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
+            const maxWidth = options.maxWidth || 1600;
+            const maxHeight = options.maxHeight || 1600;
             let width = img.width;
             let height = img.height;
-            
-            // Kalkulasi rasio aspek
+
+            // Hitung rasio aspek baru
             if (width > height) {
                 if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
+                    height = Math.round((height *= maxWidth / width));
                     width = maxWidth;
                 }
             } else {
                 if (height > maxHeight) {
-                    width = Math.round((width * maxHeight) / height);
+                    width = Math.round((width *= maxHeight / height));
                     height = maxHeight;
                 }
             }
 
-            // Gambar ke canvas dengan ukuran baru
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
+
             const ctx = canvas.getContext('2d');
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
-            
-            // Konversi kembali ke Base64
-            const compressedBase64 = canvas.toDataURL(type, quality);
-            const originalSize = Math.round((base64Image.length * 3) / 4 / 1024);
-            const compressedSize = Math.round((compressedBase64.length * 3) / 4 / 1024);
+
+            const quality = options.quality || 0.8; // Kualitas standar 80%
+            const type = options.type || 'image/jpeg';
+            const compressedDataUrl = canvas.toDataURL(type, quality);
+
+            // Hitung persentase reduksi ukuran file
+            const originalSize = Math.round((dataUrl.length * 3) / 4 / 1024);
+            const compressedSize = Math.round((compressedDataUrl.length * 3) / 4 / 1024);
             const reduction = Math.round(((originalSize - compressedSize) / originalSize) * 100);
-            
-            console.log(`[COMPRESSION] ${originalSize}KB → ${compressedSize}KB (-${reduction}%)`);
-            
+
             resolve({
-                dataUrl: compressedBase64,
+                dataUrl: compressedDataUrl,
                 originalSize,
                 compressedSize,
-                reduction,
-                width,
-                height
+                reduction
             });
         };
         img.onerror = reject;
-        img.src = base64Image;
+        img.src = dataUrl;
     });
 }
 
 // ============================================
-// 4. BRANCH MENU POPUP (GLOBAL UI)
+// 4. JSONP CLEANUP HELPER
 // ============================================
 
-function toggleBranchMenuPopup() {
-    const overlay = document.getElementById('branchMenuPopupOverlay');
-    
-    if (overlay && overlay.classList.contains('hidden')) {
-        // Show popup
-        overlay.classList.remove('hidden');
-        updateAdminBranchVisibility();
-    } else {
-        closeBranchMenuPopup();
-    }
-}
-
-function closeBranchMenuPopup() {
-    const overlay = document.getElementById('branchMenuPopupOverlay');
-    if (overlay) overlay.classList.add('hidden');
-}
-
-function updateAdminBranchVisibility() {
-    const adminBranchItem = document.getElementById('adminBranchItem');
-    // isAdmin() akan dideklarasikan di auth.js
-    if (adminBranchItem && typeof isAdmin === 'function') {
-        adminBranchItem.style.display = isAdmin() ? 'flex' : 'none';
-    }
-}
-
-// ============================================
-// 5. SYSTEM UPDATES & CLEANUP
-// ============================================
-
-function showUpdateAlert() {
-    const updateAlert = document.getElementById('updateAlert');
-    if (updateAlert) updateAlert.classList.remove('hidden');
-}
-
-function applyUpdate() {
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-    }
-    window.location.reload();
-}
-
-/**
- * Helper untuk cleanup JSONP callback dan script tags 
- * (menghindari memory leak saat fetching data dari Google Apps Script)
- */
 function cleanupJSONP(callbackName) {
-    // Hapus global callback
     if (window[callbackName]) {
-        try {
-            delete window[callbackName];
-        } catch (e) {
-            window[callbackName] = undefined;
-        }
+        delete window[callbackName];
     }
-    
-    // Hapus script tag yang terkait
-    const scripts = document.querySelectorAll('script');
-    scripts.forEach(script => {
-        if (script.src && script.src.includes('callback=' + callbackName)) {
-            if (script.parentNode) script.remove();
-        }
-    });
+    // Hapus tag <script> sisa request agar DOM tidak kotor
+    const scripts = document.querySelectorAll(`script[src*="${callbackName}"]`);
+    scripts.forEach(script => script.remove());
 }
