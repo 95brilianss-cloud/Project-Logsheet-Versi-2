@@ -62,7 +62,7 @@ function loadTodayJobs() {
     const jobDateEl = document.getElementById('jobDate');
     const jobListContainer = document.getElementById('jobListContainer');
     
-    // Set today's date
+    // Set tanggal hari ini
     const today = new Date();
     if (jobDateEl) {
         jobDateEl.textContent = today.toLocaleDateString('id-ID', { 
@@ -72,7 +72,7 @@ function loadTodayJobs() {
         });
     }
     
-    // Show loading state
+    // Tampilkan animasi loading
     if (jobListContainer) {
         jobListContainer.innerHTML = `
             <div class="job-loading">
@@ -82,16 +82,22 @@ function loadTodayJobs() {
         `;
     }
     
-    // Fetch jobs from spreadsheet
     fetchJobsFromSheet();
 }
 
 async function fetchJobsFromSheet() {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // Batas waktu 5 detik
+
     try {
-        const response = await fetch(`${JOB_SHEET_URL}?action=getJobs&date=today`, {
+        const targetSheet = encodeURIComponent("joblist hari ini");
+        const response = await fetch(`${JOB_SHEET_URL}?action=getJobs&date=today&sheetName=${targetSheet}`, {
             method: 'GET',
-            mode: 'cors'
+            mode: 'cors',
+            signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
         
         if (!response.ok) throw new Error('Network error');
         
@@ -103,8 +109,8 @@ async function fetchJobsFromSheet() {
             renderEmptyJobList();
         }
     } catch (error) {
-        console.log('Error fetching jobs:', error);
-        // Fallback: show sample jobs or empty state
+        console.log('Fetch jobs error/timeout, memuat sample:', error);
+        clearTimeout(timeoutId);
         renderSampleJobs();
     }
 }
@@ -143,7 +149,6 @@ function renderSampleJobs() {
     const jobListContainer = document.getElementById('jobListContainer');
     if (!jobListContainer) return;
     
-    // Sample jobs for demo (will be replaced with actual data)
     const sampleJobs = [
         { description: 'Input Logsheet Shift 3', status: 'pending' },
         { description: 'TPM Area Turbin', status: 'completed' },
@@ -165,7 +170,35 @@ function renderSampleJobs() {
 }
 
 // ============================================
-// 3. UI & EVENT LISTENERS SETUP
+// 3. UI & NAVIGATION HELPERS (GLOBAL SCOPE)
+// ============================================
+
+function goToLogsheetTurbin() {
+    navigateTo('areaListScreen');
+    if (typeof renderMenu === 'function') {
+        renderMenu(); // Memanggil fungsi dari logsheet.js
+    }
+}
+
+function goToLogsheetCT() {
+    navigateTo('ctAreaListScreen');
+    if (typeof renderCTMenu === 'function') {
+        renderCTMenu();
+    }
+}
+
+function toggleBranchMenuPopup() {
+    const overlay = document.getElementById('branchMenuPopupOverlay');
+    if (overlay) overlay.classList.toggle('hidden');
+}
+
+function closeBranchMenuPopup() {
+    const overlay = document.getElementById('branchMenuPopupOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+// ============================================
+// 4. UI SETUP & LISTENERS
 // ============================================
 
 function setupLoginListeners() {
@@ -223,158 +256,22 @@ function simulateLoading() {
     }, 300);
 }
 
-function loadUserStats() {
-    const totalAreas = Object.keys(AREAS).length;
-    let completedAreas = 0;
-    
-    Object.entries(AREAS).forEach(([areaName, params]) => {
-        const filled = currentInput[areaName] ? Object.keys(currentInput[areaName]).length : 0;
-        if (filled === params.length && filled > 0) completedAreas++;
-    });
-    
-    const statProgress = document.getElementById('statProgress');
-    const statAreas = document.getElementById('statAreas');
-    
-    if (statProgress) {
-        const percent = Math.round((completedAreas / totalAreas) * 100);
-        statProgress.textContent = `${percent}%`;
-    }
-    
-    if (statAreas) {
-        statAreas.textContent = `${completedAreas}/${totalAreas}`;
-    }
-}
-
 // ============================================
-// 4. PWA INSTALL HANDLER
-// ============================================
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    
-    // Tampilkan tombol install di header
-    const installBtn = document.getElementById('installPwaBtn');
-    if (installBtn) installBtn.classList.remove('hidden');
-    
-    if (!isAppInstalled() && !installBannerShown) {
-        setTimeout(() => showCustomInstallBanner(), 3000);
-    }
-});
-
-window.addEventListener('appinstalled', () => {
-    hideCustomInstallBanner();
-    deferredPrompt = null;
-    installBannerShown = true;
-    
-    // Sembunyikan tombol install di header
-    const installBtn = document.getElementById('installPwaBtn');
-    if (installBtn) installBtn.classList.add('hidden');
-    
-    showToast('✓ Aplikasi berhasil diinstall!', 'success');
-});
-
-function showCustomInstallBanner() {
-    const popup = document.getElementById('pwaInstallPopup');
-    if (!popup) return;
-    
-    popup.classList.remove('hidden');
-    installBannerShown = true;
-}
-
-function hideCustomInstallBanner() {
-    const popup = document.getElementById('pwaInstallPopup');
-    if (popup) {
-        popup.classList.add('hidden');
-    }
-}
-
-function dismissPWAInstall() {
-    hideCustomInstallBanner();
-}
-
-async function installPWA() {
-    if (!deferredPrompt) {
-        showToast('Aplikasi sudah terinstall atau browser tidak mendukung', 'info');
-        return;
-    }
-    
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-        hideCustomInstallBanner();
-        showToast('✓ Menginstall aplikasi...', 'success');
-    } else {
-        hideCustomInstallBanner();
-    }
-    
-    deferredPrompt = null;
-}
-
-function isAppInstalled() {
-    return window.matchMedia('(display-mode: standalone)').matches || 
-           window.navigator.standalone === true ||
-           document.referrer.includes('android-app://');
-}
-
-// ============================================
-// 5. KEYBOARD SHORTCUTS
-// ============================================
-
-document.addEventListener('keydown', (e) => {
-    const paramScreen = document.getElementById('paramScreen');
-    const ctParamScreen = document.getElementById('ctParamScreen');
-    
-    if (paramScreen && paramScreen.classList.contains('active')) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentInputType !== 'select' && typeof saveStep === 'function') saveStep();
-        } else if (e.key === 'Escape') {
-            if (typeof goBack === 'function') goBack();
-        }
-    }
-    
-    if (ctParamScreen && ctParamScreen.classList.contains('active')) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (currentInputTypeCT !== 'select' && typeof saveCTStep === 'function') saveCTStep();
-        } else if (e.key === 'Escape') {
-            if (typeof goBackCT === 'function') goBackCT();
-        }
-    }
-});
-
-// ============================================
-// 6. DOM READY INITIALIZATION
+// 5. DOM READY INITIALIZATION
 // ============================================
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. Inisiasi State (Local Storage & Variables)
     initState();
     
-    // 2. Set Versi UI
     const versionDisplay = document.getElementById('versionDisplay');
     if (versionDisplay) versionDisplay.textContent = APP_VERSION;
     
-    // 3. Cek Sesi Auth
     if (typeof initAuth === 'function') initAuth();
     
-    // 4. Setup Event Listeners
     setupLoginListeners();
     setupTPMListeners();
     setupParamPhotoListeners();
-    
-    // 5. Hilangkan Loading Screen
     simulateLoading();
-
-   // Tambahkan fungsi ini di js/main.js untuk menangani perpindahan layar
-function goToLogsheetTurbin() {
-    navigateTo('areaListScreen');
-    if (typeof renderMenu === 'function') {
-        renderMenu(); // Memanggil fungsi dari logsheet.js
-    }
-}
     
     console.log(`${APP_NAME} v${APP_VERSION} initialized successfully`);
 });
