@@ -358,7 +358,7 @@
         </div>
 
         <div class="logsheet-select-container">
-            <div class="logsheet-select-card" onclick="navigateTo('areaListScreen')">
+            <div class="logsheet-select-card" onclick="goToLogsheetTurbin()">
                 <div class="logsheet-icon-large turbin">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: white;">
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -375,7 +375,7 @@
                 </div>
             </div>
 
-            <div class="logsheet-select-card" onclick="goToLogsheetTurbin()">
+            <div class="logsheet-select-card ct-version" onclick="goToLogsheetCT()">
                 <div class="logsheet-icon-large ct">
                     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: white;">
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
@@ -1176,24 +1176,5 @@
 <script src="js/balancing.js"></script>
 <script src="js/main.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const originalNavigateTo = window.navigateTo;
-        window.navigateTo = function(screenId) {
-            if (screenId === 'logsheetSelectScreen' && typeof currentUser !== 'undefined' && currentUser) {
-                const userEl = document.getElementById('logsheetSelectUser');
-                if (userEl) userEl.textContent = currentUser.name || currentUser.username;
-            }
-            if (typeof originalNavigateTo === 'function') {
-                originalNavigateTo(screenId);
-            } else {
-                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                const target = document.getElementById(screenId);
-                if (target) target.classList.add('active');
-                window.scrollTo(0, 0);
-            }
-        };
-    });
-</script>
 </body>
 </html>
