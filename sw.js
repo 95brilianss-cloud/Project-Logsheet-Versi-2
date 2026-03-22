@@ -1,11 +1,11 @@
 // ============================================
 // SERVICE WORKER - TURBINE LOGSHEET PRO
 // ============================================
-// CATATAN: Versi di sini akan otomatis tersinkron dengan js/config.js
+// CATATAN: Versi di sini otomatis tersinkron dengan js/config.js
 // melalui URL parameter saat registrasi di js/main.js
 // ============================================
 
-// Ambil versi dari URL parameter (dari main.js saat register)
+// Ambil versi dari URL parameter (dikirim dari main.js saat register)
 const getVersionFromURL = () => {
     const url = new URL(self.location.href);
     return url.searchParams.get('v') || '2.0.0';
@@ -39,7 +39,7 @@ const ASSETS = [
     './js/balancing.js',
     './js/main.js',
     
-    // PWA Icons (Minimal masukkan ukuran inti untuk offline mode)
+    // PWA Icons
     './icon-192x192.png',
     './icon-512x512.png'
 ];
@@ -50,9 +50,9 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
     console.log(`[SW] Installing version ${VERSION}...`);
 
-    // Skip waiting langsung agar SW baru segera aktif
-    self.skipWaiting();
-
+    // JANGAN panggil self.skipWaiting() di sini agar browser 
+    // bisa mendeteksi status "waiting" untuk memicu notifikasi update di UI.
+    
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then((cache) => {
@@ -75,21 +75,26 @@ self.addEventListener('activate', (event) => {
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
+                    // Hapus cache versi lama yang dimulai dengan "turbine-logsheets-"
                     if (cacheName !== CACHE_NAME && cacheName.startsWith('turbine-logsheets-')) {
                         console.log(`[SW] Deleting old cache: ${cacheName}`);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => self.clients.claim()) // Langsung kendalikan client (browser) tanpa reload
+        }).then(() => {
+            // Mengambil kendali client segera setelah SW aktif
+            return self.clients.claim();
+        })
     );
 });
 
 // ============================================
-// FETCH EVENT - Network fallback to Cache
+// FETCH EVENT - Network First / Cache Fallback
 // ============================================
 self.addEventListener('fetch', (event) => {
-    // Abaikan request API ke Google Apps Script atau metode selain GET (POST, dll)
+    // Abaikan request API ke Google Apps Script (GAS) agar data selalu fresh
+    // Abaikan juga metode selain GET (POST untuk simpan data tidak boleh di-cache)
     if (event.request.url.includes('script.google.com') || event.request.method !== 'GET') {
         return;
     }
@@ -97,15 +102,13 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(event.request)
             .then((cachedResponse) => {
-                // Return cache jika ada
                 if (cachedResponse) {
                     return cachedResponse;
                 }
 
-                // Jika tidak ada di cache, ambil dari network
                 return fetch(event.request)
                     .then((networkResponse) => {
-                        // Cache response baru yang berhasil
+                        // Hanya cache response yang valid (status 200)
                         if (networkResponse && networkResponse.status === 200) {
                             const cacheCopy = networkResponse.clone();
                             caches.open(CACHE_NAME).then((cache) => {
@@ -116,8 +119,11 @@ self.addEventListener('fetch', (event) => {
                     })
                     .catch((error) => {
                         console.error('[SW] Fetch failed:', error);
-                        // Return fallback response standar jika network mati dan tidak ada di cache
-                        return new Response('Network error. Anda sedang offline.', { 
+                        // Jika offline dan file tidak ada di cache, berikan respons sederhana
+                        if (event.request.mode === 'navigate') {
+                            return caches.match('./index.html');
+                        }
+                        return new Response('Koneksi terputus. Data tidak tersedia di offline cache.', { 
                             status: 408,
                             headers: { 'Content-Type': 'text/plain' }
                         });
@@ -127,20 +133,12 @@ self.addEventListener('fetch', (event) => {
 });
 
 // ============================================
-// MESSAGE EVENT - Handle pesan dari main thread
+// MESSAGE EVENT - Handle perintah dari Main App
 // ============================================
 self.addEventListener('message', (event) => {
-    // Menerima perintah update dari main.js
+    // Digunakan saat tombol "Update Sekarang" di klik di UI
     if (event.data && event.data.type === 'SKIP_WAITING') {
-        console.log('[SW] Skip waiting triggered by client');
+        console.log('[SW] Skip waiting triggered by user interaction');
         self.skipWaiting();
-    }
-
-    // Mengirim info versi ke client
-    if (event.data && event.data.type === 'GET_VERSION') {
-        event.source.postMessage({
-            type: 'VERSION_INFO',
-            version: VERSION
-        });
     }
 });
