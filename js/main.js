@@ -30,12 +30,18 @@ function initState() {
 // Register Service Worker untuk PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register(`./sw.js?v=${APP_VERSION}`)
+        // MENGGUNAKAN URL STATIS: Menghapus ?v=${APP_VERSION} agar tidak terjebak cache
+        navigator.serviceWorker.register('./sw.js')
             .then(registration => {
                 console.log('SW registered:', registration.scope);
+
+                // Cek update secara berkala (setiap kali aplikasi dibuka/fokus)
+                registration.update();
+
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
+                        // Munculkan notifikasi jika SW baru selesai terinstal (waiting)
                         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                             showUpdateAlert();
                         }
@@ -44,10 +50,9 @@ if ('serviceWorker' in navigator) {
             })
             .catch(err => console.error('SW registration failed:', err));
             
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data?.type === 'VERSION_CHECK' && event.data.version !== APP_VERSION) {
-                showUpdateAlert();
-            }
+        // Reload otomatis saat Service Worker baru mengambil alih kendali (setelah skipWaiting)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
         });
     });
 }
