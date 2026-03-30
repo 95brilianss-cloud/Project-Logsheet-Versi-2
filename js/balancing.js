@@ -18,7 +18,7 @@ function initBalancingScreen() {
     if (draftData) {
         loadBalancingDraft();
     } else {
-        loadLastBalancingData(); // Mengambil data terakhir dari server
+        loadLastBalancingData(); 
     }
     
     calculateLPBalance();
@@ -59,9 +59,7 @@ function setDefaultDateTime() {
     const dateInput = document.getElementById('balancingDate');
     const timeInput = document.getElementById('balancingTime');
     
-    // Format tanggal ke YYYY-MM-DD
     if (dateInput) dateInput.value = now.toISOString().split('T')[0];
-    // Format waktu ke HH:MM
     if (timeInput) timeInput.value = now.toTimeString().slice(0, 5);
 }
 
@@ -85,11 +83,9 @@ function loadLastBalancingData() {
         if (response && response.success && response.data) {
             const lastDataFetch = response.data;
 
-            // Update Label Header (Memperbaiki issue --:--)
             if (balancingTimeLabel) balancingTimeLabel.textContent = lastDataFetch._lastTime || '--:--';
             if (balancingDateLabel) balancingDateLabel.textContent = lastDataFetch['Tanggal'] || '--/--/----';
 
-            // Mapping field dari server (Spreadsheet) ke form PWA
             const fieldMapping = {
                 'loadMW': lastDataFetch['Load_MW'],
                 'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
@@ -115,12 +111,14 @@ function loadLastBalancingData() {
                 }
             });
 
+            const eksporEl = document.getElementById('eksporMW');
+            if (eksporEl && eksporEl.value) handleEksporInput(eksporEl);
+
             updateStatusIndicator(true);
             calculateLPBalance();
             saveBalancingDraft();
             showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
         } else {
-            // Jika gagal/tidak ada data, set default ke waktu sekarang
             setDefaultDateTime();
         }
         cleanupJSONP(callbackName);
@@ -144,37 +142,66 @@ function resetBalancingForm() {
     if (!confirm('Yakin reset form? Semua data akan dikosongkan.')) return;
     
     clearBalancingDraft();
-    
     BALANCING_FIELDS.forEach(fieldId => {
         const element = document.getElementById(fieldId);
         if (element) element.value = '';
     });
     
-    // Pastikan dipanggil terakhir agar tanggal/jam tidak ikut kosong
     setDefaultDateTime(); 
     
     const eksporEl = document.getElementById('eksporMW');
-    if (eksporEl) {
-        eksporEl.setAttribute('data-state', '');
-        eksporEl.style.borderColor = 'rgba(148, 163, 184, 0.2)';
-    }
+    if (eksporEl) handleEksporInput(eksporEl);
     
     calculateLPBalance();
     showCustomAlert('Form berhasil direset!', 'success');
 }
 
 // ============================================
-// 4. CALCULATIONS & AUTO-SAVE
+// 4. CALCULATIONS & UI HANDLERS
 // ============================================
+
+function handleEksporInput(input) {
+    const label = document.getElementById('eksporLabel');
+    const hint = document.getElementById('eksporHint');
+    let value = parseFloat(input.value);
+    
+    if (isNaN(value) || input.value === '') {
+        if (label) { label.textContent = 'Ekspor/Impor (MW)'; label.style.color = '#94a3b8'; }
+        if (hint) { hint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>'; hint.style.color = '#94a3b8'; }
+        input.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+        input.style.background = 'rgba(15, 23, 42, 0.6)';
+        input.setAttribute('data-state', '');
+        return;
+    }
+    
+    if (value < 0) {
+        if (label) { label.textContent = 'Ekspor (MW)'; label.style.color = '#10b981'; }
+        if (hint) { hint.innerHTML = '✓ Posisi: <strong>Ekspor ke Grid</strong>'; hint.style.color = '#10b981'; }
+        input.style.borderColor = '#10b981';
+        input.style.background = 'rgba(16, 185, 129, 0.05)';
+        input.setAttribute('data-state', 'ekspor');
+    } else {
+        if (label) { label.textContent = 'Impor (MW)'; label.style.color = '#f59e0b'; }
+        if (hint) { hint.innerHTML = '✓ Posisi: <strong>Impor dari Grid</strong>'; hint.style.color = '#f59e0b'; }
+        input.style.borderColor = '#f59e0b';
+        input.style.background = 'rgba(245, 158, 11, 0.05)';
+        input.setAttribute('data-state', 'impor');
+    }
+}
+
+function getEksporImporValue() {
+    const input = document.getElementById('eksporMW');
+    if (!input || !input.value) return 0;
+    const value = parseFloat(input.value);
+    return isNaN(value) ? 0 : value;
+}
 
 function calculateLPBalance() {
     const produksi = parseFloat(document.getElementById('fq1105')?.value) || 0;
     const ids = ['stgSteam', 'pa2Steam', 'puri2Steam', 'deaeratorSteam', 'dumpCondenser', 'pcv6105', 'melterSA2', 'ejectorSteam', 'glandSealSteam'];
     
     let totalKonsumsi = 0;
-    ids.forEach(id => {
-        totalKonsumsi += parseFloat(document.getElementById(id)?.value) || 0;
-    });
+    ids.forEach(id => { totalKonsumsi += parseFloat(document.getElementById(id)?.value) || 0; });
     
     const totalDisplay = document.getElementById('totalKonsumsiSteam');
     if (totalDisplay) totalDisplay.textContent = totalKonsumsi.toFixed(1) + ' t/h';
@@ -192,9 +219,7 @@ function calculateLPBalance() {
 }
 
 function setupBalancingAutoSave() {
-    setInterval(() => {
-        if (hasBalancingData()) saveBalancingDraft();
-    }, 10000);
+    setInterval(() => { if (hasBalancingData()) saveBalancingDraft(); }, 10000);
 }
 
 function saveBalancingDraft() {
@@ -242,23 +267,14 @@ function formatWhatsAppMessage(data) {
     const tglIndo = `${tglParts[2]}-${tglParts[1]}-${tglParts[0]}`;
     
     let message = `*Update STG 17,5 MW*\n`;
-    message += `Tgl ${tglIndo}\n`;
-    message += `Jam ${data.Jam}\n\n`;
-    
-    message += `*Output Power STG 17,5*\n`;
+    message += `Tgl ${tglIndo} Jam ${data.Jam}\n\n`;
+    message += `*Output Power*\n`;
     message += `⠂ Load = ${data.Load_MW} MW\n`;
     message += `⠂ ${data.Ekspor_Impor_Status} = ${Math.abs(data.Ekspor_Impor_MW)} MW\n\n`;
-    
-    message += `*Balance Power SCADA*\n`;
-    message += `⠂ PLN = ${data.PLN_MW} MW\n`;
-    message += `⠂ UBB = ${data.UBB_MW} MW\n`;
-    message += `⠂ GTG = ${data.GTG_MW} MW\n\n`;
-    
-    message += `*Konsumsi Steam 3B*\n`;
+    message += `*Steam Balance*\n`;
     message += `⠂ FQ-1105 = ${data['Produksi_Steam_SA_t/h']} t/h\n`;
     message += `⠂ Total Konsumsi = ${data['Total_Konsumsi_Steam_t/h']} t/h\n`;
     message += `*${data.LPS_Balance_Status}* = ${data['LPS_Balance_t/h']} t/h\n\n`;
-    
     message += `*Kegiatan Shift ${data.Shift}*\n`;
     message += data.Kegiatan_Shift || '-';
     
@@ -267,12 +283,10 @@ function formatWhatsAppMessage(data) {
 
 async function submitBalancingData() {
     if (!requireAuth()) return;
-    
     const progress = showUploadProgress('Mengirim Data Balancing...');
-    currentUploadController = new AbortController();
     
     const lpBalance = calculateLPBalance();
-    const eksporValue = parseFloat(document.getElementById('eksporMW')?.value) || 0;
+    const eksporValue = getEksporImporValue();
     
     const balancingData = {
         type: 'BALANCING',
@@ -310,7 +324,6 @@ async function submitBalancingData() {
             window.open(`https://wa.me/6281382160345?text=${waMessage}`, '_blank');
             navigateTo('homeScreen');
         }, 1000);
-        
     } catch (error) {
         progress.error();
         showCustomAlert('Gagal mengirim ke server.', 'error');
