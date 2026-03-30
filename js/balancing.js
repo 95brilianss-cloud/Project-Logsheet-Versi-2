@@ -194,7 +194,7 @@ function updateDraftStatusIndicator() {
 // 3. FETCH LAST DATA & RESET FORM
 // ============================================
 
-async function loadLastBalancingData(fromSpreadsheet = true) {
+function loadLastBalancingData() {
     const loader = document.getElementById('loader');
     const loaderText = document.querySelector('.loader-text h3');
     const timeLabel = document.getElementById('balancingLastTimeLabel');
@@ -203,42 +203,18 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
     if (loader) loader.style.display = 'flex';
     if (loaderText) loaderText.textContent = 'Mengambil data terakhir...';
     
-    try {
-        let lastDataFetch = null;
+    // Gunakan JSONP agar tidak terblokir CORS oleh Google Apps Script
+    const callbackName = 'jsonp_balancing_' + Date.now();
+    
+    window[callbackName] = (result) => {
+        if (loader) loader.style.display = 'none';
         
-        if (fromSpreadsheet && navigator.onLine) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                
-                const response = await fetch(`${GAS_URL}?action=getLastBalancing&t=${Date.now()}`, {
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    lastDataFetch = result.data;
-                    
-                    // UPDATE LABEL HEADER (Memperbaiki Jam & Tgl --)
-                    if (timeLabel && lastDataFetch._lastTime) timeLabel.textContent = lastDataFetch._lastTime;
-                    if (dateLabel && lastDataFetch.Tanggal) dateLabel.textContent = lastDataFetch.Tanggal;
-                }
-            } catch (fetchError) {
-                console.warn('Gagal fetch dari spreadsheet:', fetchError);
-            }
-        }
-        
-        if (!lastDataFetch) {
-            const history = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
-            if (history.length > 0) lastDataFetch = history[history.length - 1];
-        }
-        
-        if (!lastDataFetch) {
-            setDefaultDateTime();
-            return;
-        }
+        if (result.success && result.data) {
+            const lastDataFetch = result.data;
+            
+            // UPDATE LABEL HEADER (Tgl & Jam di bagian atas form)
+            if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--';
+            if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';}
         
         // Mapping field dari server ke form
         const fieldMapping = {
@@ -284,25 +260,36 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
         };
         
         Object.entries(fieldMapping).forEach(([id, value]) => {
-            const el = document.getElementById(id);
-            if (el && value !== undefined && value !== null && value !== '') {
-                el.value = value;
-            }
-        });
+                const el = document.getElementById(id);
+                if (el && value !== undefined && value !== null && value !== '') {
+                    el.value = value;
+                }
+            });
+            
+            const eksporEl = document.getElementById('eksporMW');
+            if (eksporEl && eksporEl.value) handleEksporInput(eksporEl);
+            
+            calculateLPBalance();
+            saveBalancingDraft();
+            showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
+        } else {
+            // Jika data kosong, pastikan input tanggal/jam tetap terisi waktu sekarang
+            setDefaultDateTime();
+        }
         
-        const eksporEl = document.getElementById('eksporMW');
-        if (eksporEl && eksporEl.value) handleEksporInput(eksporEl);
-        
-        calculateLPBalance();
-        saveBalancingDraft();
-        showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
-        
-    } catch (e) {
-        console.error('Error loading last data:', e);
-        setDefaultDateTime();
-    } finally {
+        // Bersihkan tag script JSONP (fungsi ini biasanya ada di main.js atau utils.js)
+        if (typeof cleanupJSONP === 'function') cleanupJSONP(callbackName);
+    };
+    
+    // Membuat elemen script untuk memicu JSONP
+    const script = document.createElement('script');
+    script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
+    script.onerror = () => {
         if (loader) loader.style.display = 'none';
-    }
+        console.error('Gagal mengambil data dari server');
+        setDefaultDateTime();
+    };
+    document.body.appendChild(script);
 }
 
 function resetBalancingForm() {
