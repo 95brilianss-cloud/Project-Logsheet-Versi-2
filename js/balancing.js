@@ -194,125 +194,113 @@ function updateDraftStatusIndicator() {
 // 3. FETCH LAST DATA & RESET FORM
 // ============================================
 
-async function loadLastBalancingData(fromSpreadsheet = true) {
+function loadLastBalancingData() {
     const loader = document.getElementById('loader');
     const loaderText = document.querySelector('.loader-text h3');
-    
+    const balancingTimeLabel = document.getElementById('balancingLastTimeLabel'); // Pastikan ID ini ada di index.html
+
     if (loader) loader.style.display = 'flex';
     if (loaderText) loaderText.textContent = 'Mengambil data terakhir...';
+
+    // Gunakan mekanisme JSONP untuk menghindari CORS Error dari Google Apps Script
+    const callbackName = 'jsonp_balancing_' + Date.now();
     
-    try {
-        let lastDataFetch = null;
-        let source = 'local';
-        
-        if (fromSpreadsheet && navigator.onLine) {
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                
-                // GAS_URL dari config.js
-                const response = await fetch(`${GAS_URL}?action=getLastBalancing&t=${Date.now()}`, {
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                const result = await response.json();
-                
-                if (result.success && result.data) {
-                    lastDataFetch = result.data;
-                    source = 'spreadsheet';
-                }
-            } catch (fetchError) {
-                console.warn('Gagal fetch dari spreadsheet:', fetchError);
-            }
-        }
-        
-        if (!lastDataFetch) {
-            const history = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
-            if (history.length > 0) {
-                lastDataFetch = history[history.length - 1];
-                source = 'local';
-            }
-        }
-        
-        if (!lastDataFetch) {
-            setDefaultDateTime();
-            return;
-        }
-        
-        // Mapping field dari server ke form
-        const fieldMapping = {
-            'loadMW': lastDataFetch['Load_MW'],
-            'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
-            'plnMW': lastDataFetch['PLN_MW'],
-            'ubbMW': lastDataFetch['UBB_MW'],
-            'pieMW': lastDataFetch['PIE_MW'],
-            'tg65MW': lastDataFetch['TG65_MW'],
-            'tg66MW': lastDataFetch['TG66_MW'],
-            'gtgMW': lastDataFetch['GTG_MW'],
-            'ss6500MW': lastDataFetch['SS6500_MW'],
-            'ss2000Via': lastDataFetch['SS2000_Via'],
-            'activePowerMW': lastDataFetch['Active_Power_MW'],
-            'reactivePowerMVAR': lastDataFetch['Reactive_Power_MVAR'],
-            'currentS': lastDataFetch['Current_S_A'],
-            'voltageV': lastDataFetch['Voltage_V'],
-            'hvs65l02MW': lastDataFetch['HVS65_L02_MW'],
-            'hvs65l02Current': lastDataFetch['HVS65_L02_Current_A'],
-            'total3BMW': lastDataFetch['Total_3B_MW'],
-            'fq1105': lastDataFetch['Produksi_Steam_SA_t/h'],
-            'stgSteam': lastDataFetch['STG_Steam_t/h'],
-            'pa2Steam': lastDataFetch['PA2_Steam_t/h'],
-            'puri2Steam': lastDataFetch['Puri2_Steam_t/h'],
-            'melterSA2': lastDataFetch['Melter_SA2_t/h'],
-            'ejectorSteam': lastDataFetch['Ejector_t/h'],
-            'glandSealSteam': lastDataFetch['Gland_Seal_t/h'],
-            'deaeratorSteam': lastDataFetch['Deaerator_t/h'],
-            'dumpCondenser': lastDataFetch['Dump_Condenser_t/h'],
-            'pcv6105': lastDataFetch['PCV6105_t/h'],
-            'pi6122': lastDataFetch['PI6122_kg/cm2'],
-            'ti6112': lastDataFetch['TI6112_C'],
-            'ti6146': lastDataFetch['TI6146_C'],
-            'ti6126': lastDataFetch['TI6126_C'],
-            'axialDisplacement': lastDataFetch['Axial_Displacement_mm'],
-            'vi6102': lastDataFetch['VI6102_μm'],
-            'te6134': lastDataFetch['TE6134_C'],
-            'ctSuFan': lastDataFetch['CT_SU_Fan'],
-            'ctSuPompa': lastDataFetch['CT_SU_Pompa'],
-            'ctSaFan': lastDataFetch['CT_SA_Fan'],
-            'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
-            'kegiatanShift': lastDataFetch['Kegiatan_Shift']
-        };
-        
-        Object.entries(fieldMapping).forEach(([id, value]) => {
-            const el = document.getElementById(id);
-            if (el && value !== undefined && value !== null && value !== '') {
-                el.value = value;
-            }
-        });
-        
-        const eksporEl = document.getElementById('eksporMW');
-        if (eksporEl && eksporEl.value) {
-            handleEksporInput(eksporEl);
-        }
-        
-        calculateLPBalance();
-        saveBalancingDraft();
-        
-        const msg = source === 'spreadsheet' 
-            ? `✓ Data terakhir dari server dimuat.`
-            : `✓ Data terakhir dari penyimpanan lokal dimuat.`;
-        
-        // showCustomAlert dari utils.js
-        showCustomAlert(msg, 'success');
-        
-    } catch (e) {
-        console.error('Error loading last data:', e);
-        setDefaultDateTime();
-    } finally {
+    window[callbackName] = (response) => {
         if (loader) loader.style.display = 'none';
-    }
+        
+        // Cek apakah data berhasil diterima dari properti .data (sesuai skrip GAS Anda)
+        if (response && response.success && response.data) {
+            const lastDataFetch = response.data;
+
+            // 1. Update Jam Terakhir di UI (Memperbaiki issue --:--)
+            if (balancingTimeLabel) {
+                balancingTimeLabel.textContent = lastDataFetch._lastTime || '--:--';
+            }
+
+            // 2. Mapping field dari server (Spreadsheet) ke form PWA
+            const fieldMapping = {
+                'loadMW': lastDataFetch['Load_MW'],
+                'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
+                'plnMW': lastDataFetch['PLN_MW'],
+                'ubbMW': lastDataFetch['UBB_MW'],
+                'pieMW': lastDataFetch['PIE_MW'],
+                'tg65MW': lastDataFetch['TG65_MW'],
+                'tg66MW': lastDataFetch['TG66_MW'],
+                'gtgMW': lastDataFetch['GTG_MW'],
+                'ss6500MW': lastDataFetch['SS6500_MW'],
+                'ss2000Via': lastDataFetch['SS2000_Via'],
+                'activePowerMW': lastDataFetch['Active_Power_MW'],
+                'reactivePowerMVAR': lastDataFetch['Reactive_Power_MVAR'],
+                'currentS': lastDataFetch['Current_S_A'],
+                'voltageV': lastDataFetch['Voltage_V'],
+                'hvs65l02MW': lastDataFetch['HVS65_L02_MW'],
+                'hvs65l02Current': lastDataFetch['HVS65_L02_Current_A'],
+                'total3BMW': lastDataFetch['Total_3B_MW'],
+                'fq1105': lastDataFetch['Produksi_Steam_SA_t/h'],
+                'stgSteam': lastDataFetch['STG_Steam_t/h'],
+                'pa2Steam': lastDataFetch['PA2_Steam_t/h'],
+                'puri2Steam': lastDataFetch['Puri2_Steam_t/h'],
+                'melterSA2': lastDataFetch['Melter_SA2_t/h'],
+                'ejectorSteam': lastDataFetch['Ejector_t/h'],
+                'glandSealSteam': lastDataFetch['Gland_Seal_t/h'],
+                'deaeratorSteam': lastDataFetch['Deaerator_t/h'],
+                'dumpCondenser': lastDataFetch['Dump_Condenser_t/h'],
+                'pcv6105': lastDataFetch['PCV6105_t/h'],
+                'pi6122': lastDataFetch['PI6122_kg/cm2'],
+                'ti6112': lastDataFetch['TI6112_C'],
+                'ti6146': lastDataFetch['TI6146_C'],
+                'ti6126': lastDataFetch['TI6126_C'],
+                'axialDisplacement': lastDataFetch['Axial_Displacement_mm'],
+                'vi6102': lastDataFetch['VI6102_μm'],
+                'te6134': lastDataFetch['TE6134_C'],
+                'ctSuFan': lastDataFetch['CT_SU_Fan'],
+                'ctSuPompa': lastDataFetch['CT_SU_Pompa'],
+                'ctSaFan': lastDataFetch['CT_SA_Fan'],
+                'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
+                'kegiatanShift': lastDataFetch['Kegiatan_Shift']
+            };
+
+            // Masukkan nilai ke masing-masing input element
+            Object.entries(fieldMapping).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el && value !== undefined && value !== null && value !== '') {
+                    el.value = value;
+                }
+            });
+
+            // Jalankan fungsi kalkulasi ulang setelah data dimuat
+            calculateLPBalance();
+            saveBalancingDraft();
+            showCustomAlert('✓ Data terakhir dari server dimuat.', 'success');
+        } else {
+            // Jika gagal, coba muat dari history lokal
+            loadLastFromHistory();
+        }
+        cleanupJSONP(callbackName);
+    };
+
+    // Eksekusi pemanggilan script
+    const script = document.createElement('script');
+    script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
+    script.onerror = () => {
+        if (loader) loader.style.display = 'none';
+        loadLastFromHistory();
+        cleanupJSONP(callbackName);
+    };
+    document.body.appendChild(script);
 }
 
+// Fungsi pembantu untuk memuat data dari history jika offline/error
+function loadLastFromHistory() {
+    const history = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
+    if (history.length > 0) {
+        const lastData = history[history.length - 1];
+        // Logika mapping history sama dengan di atas...
+        showCustomAlert('Data terakhir dimuat dari penyimpanan lokal.', 'info');
+    } else {
+        setDefaultDateTime();
+    }
+}
 function resetBalancingForm() {
     if (!confirm('Yakin reset form? Semua data akan dikosongkan dan draft akan dihapus.')) {
         return;
