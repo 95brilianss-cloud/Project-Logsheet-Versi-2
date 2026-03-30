@@ -273,20 +273,16 @@ function loadLastBalancingData() {
             saveBalancingDraft();
             showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
         } else {
-            // Jika data kosong, pastikan input tanggal/jam tetap terisi waktu sekarang
             setDefaultDateTime();
         }
         
-        // Bersihkan tag script JSONP (fungsi ini biasanya ada di main.js atau utils.js)
         if (typeof cleanupJSONP === 'function') cleanupJSONP(callbackName);
     };
     
-    // Membuat elemen script untuk memicu JSONP
     const script = document.createElement('script');
     script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
     script.onerror = () => {
         if (loader) loader.style.display = 'none';
-        console.error('Gagal mengambil data dari server');
         setDefaultDateTime();
     };
     document.body.appendChild(script);
