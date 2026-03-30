@@ -290,6 +290,49 @@ function simulateLoading() {
 }
 
 // ============================================
+// 4.1 PWA INSTALLATION LOGIC
+// ============================================
+// 1. Tangkap event instalasi dari browser
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Cegah browser menampilkan prompt bawaan otomatis
+    e.preventDefault();
+    // Simpan event agar bisa dipicu nanti via tombol
+    deferredPrompt = e;
+    
+    // Tampilkan tombol instalasi jika sebelumnya disembunyikan
+    const installBtn = document.getElementById('installBtnId'); // Sesuaikan ID tombol Anda
+    if (installBtn) installBtn.style.display = 'block';
+});
+
+// 2. Definisi fungsi installPWA yang dipanggil tombol HTML
+function installPWA() {
+    if (!deferredPrompt) {
+        showCustomAlert('Aplikasi sudah terinstal atau tidak mendukung instalasi saat ini.', 'info');
+        return;
+    }
+    
+    // Munculkan prompt instalasi browser
+    deferredPrompt.prompt();
+    
+    // Cek pilihan user
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('User menerima instalasi PWA');
+        } else {
+            console.log('User menolak instalasi PWA');
+        }
+        // Reset prompt karena hanya bisa digunakan sekali
+        deferredPrompt = null;
+    });
+}
+
+// 3. Event listener jika PWA berhasil terinstal
+window.addEventListener('appinstalled', (evt) => {
+    console.log('PWA berhasil diinstal!');
+    showCustomAlert('Aplikasi berhasil ditambahkan ke layar utama.', 'success');
+});
+
+// ============================================
 // 5. DOM READY INITIALIZATION
 // ============================================
 
