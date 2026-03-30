@@ -27,7 +27,8 @@ function initBalancingScreen() {
 }
 
 function detectShift() {
-    const hour = new Date().getHours();
+    const now = new Date();
+    const hour = now.getHours();
     let shift = 3;
     let shiftText = "Shift 3 (23:00 - 07:00)";
     
@@ -58,12 +59,14 @@ function setDefaultDateTime() {
     const dateInput = document.getElementById('balancingDate');
     const timeInput = document.getElementById('balancingTime');
     
+    // Format tanggal ke YYYY-MM-DD
     if (dateInput) dateInput.value = now.toISOString().split('T')[0];
+    // Format waktu ke HH:MM
     if (timeInput) timeInput.value = now.toTimeString().slice(0, 5);
 }
 
 // ============================================
-// 2. FETCH LAST DATA (FIXED WITH JSONP)
+// 2. FETCH LAST DATA (JSONP METHOD)
 // ============================================
 
 function loadLastBalancingData() {
@@ -116,6 +119,9 @@ function loadLastBalancingData() {
             calculateLPBalance();
             saveBalancingDraft();
             showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
+        } else {
+            // Jika gagal/tidak ada data, set default ke waktu sekarang
+            setDefaultDateTime();
         }
         cleanupJSONP(callbackName);
     };
@@ -124,6 +130,7 @@ function loadLastBalancingData() {
     script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
     script.onerror = () => {
         if (loader) loader.style.display = 'none';
+        setDefaultDateTime();
         cleanupJSONP(callbackName);
     };
     document.body.appendChild(script);
@@ -138,13 +145,12 @@ function resetBalancingForm() {
     
     clearBalancingDraft();
     
-    // Kosongkan semua field input
     BALANCING_FIELDS.forEach(fieldId => {
         const element = document.getElementById(fieldId);
         if (element) element.value = '';
     });
     
-    // Kembalikan ke waktu sekarang (Agar tidak --)
+    // Pastikan dipanggil terakhir agar tanggal/jam tidak ikut kosong
     setDefaultDateTime(); 
     
     const eksporEl = document.getElementById('eksporMW');
@@ -211,7 +217,10 @@ function loadBalancingDraft() {
 }
 
 function hasBalancingData() {
-    return BALANCING_FIELDS.some(id => document.getElementById(id)?.value !== '');
+    return BALANCING_FIELDS.some(id => {
+        const el = document.getElementById(id);
+        return el && el.value !== '' && id !== 'balancingDate' && id !== 'balancingTime';
+    });
 }
 
 function clearBalancingDraft() {
@@ -222,4 +231,88 @@ function clearBalancingDraft() {
 function updateDraftStatusIndicator() {
     const indicator = document.getElementById('draftStatusIndicator');
     if (indicator) indicator.style.display = localStorage.getItem(DRAFT_KEYS.BALANCING) ? 'flex' : 'none';
+}
+
+// ============================================
+// 5. SUBMIT DATA & WHATSAPP FORMAT
+// ============================================
+
+function formatWhatsAppMessage(data) {
+    const tglParts = data.Tanggal.split('-');
+    const tglIndo = `${tglParts[2]}-${tglParts[1]}-${tglParts[0]}`;
+    
+    let message = `*Update STG 17,5 MW*\n`;
+    message += `Tgl ${tglIndo}\n`;
+    message += `Jam ${data.Jam}\n\n`;
+    
+    message += `*Output Power STG 17,5*\n`;
+    message += `⠂ Load = ${data.Load_MW} MW\n`;
+    message += `⠂ ${data.Ekspor_Impor_Status} = ${Math.abs(data.Ekspor_Impor_MW)} MW\n\n`;
+    
+    message += `*Balance Power SCADA*\n`;
+    message += `⠂ PLN = ${data.PLN_MW} MW\n`;
+    message += `⠂ UBB = ${data.UBB_MW} MW\n`;
+    message += `⠂ GTG = ${data.GTG_MW} MW\n\n`;
+    
+    message += `*Konsumsi Steam 3B*\n`;
+    message += `⠂ FQ-1105 = ${data['Produksi_Steam_SA_t/h']} t/h\n`;
+    message += `⠂ Total Konsumsi = ${data['Total_Konsumsi_Steam_t/h']} t/h\n`;
+    message += `*${data.LPS_Balance_Status}* = ${data['LPS_Balance_t/h']} t/h\n\n`;
+    
+    message += `*Kegiatan Shift ${data.Shift}*\n`;
+    message += data.Kegiatan_Shift || '-';
+    
+    return message;
+}
+
+async function submitBalancingData() {
+    if (!requireAuth()) return;
+    
+    const progress = showUploadProgress('Mengirim Data Balancing...');
+    currentUploadController = new AbortController();
+    
+    const lpBalance = calculateLPBalance();
+    const eksporValue = parseFloat(document.getElementById('eksporMW')?.value) || 0;
+    
+    const balancingData = {
+        type: 'BALANCING',
+        Operator: currentUser ? currentUser.name : 'Unknown',
+        Tanggal: document.getElementById('balancingDate')?.value || '',
+        Jam: document.getElementById('balancingTime')?.value || '',
+        Shift: currentShift,
+        'Load_MW': parseFloat(document.getElementById('loadMW')?.value) || 0,
+        'Ekspor_Impor_MW': eksporValue,
+        'Ekspor_Impor_Status': eksporValue > 0 ? 'Impor' : (eksporValue < 0 ? 'Ekspor' : 'Netral'),
+        'PLN_MW': parseFloat(document.getElementById('plnMW')?.value) || 0,
+        'UBB_MW': parseFloat(document.getElementById('ubbMW')?.value) || 0,
+        'PIE_MW': parseFloat(document.getElementById('pieMW')?.value) || 0,
+        'GTG_MW': parseFloat(document.getElementById('gtgMW')?.value) || 0,
+        'Produksi_Steam_SA_t/h': parseFloat(document.getElementById('fq1105')?.value) || 0,
+        'Total_Konsumsi_Steam_t/h': parseFloat(document.getElementById('totalKonsumsiSteam')?.textContent) || 0,
+        'LPS_Balance_t/h': Math.abs(lpBalance),
+        'LPS_Balance_Status': lpBalance < 0 ? 'Impor dari 3A' : 'Ekspor ke 3A',
+        'Kegiatan_Shift': document.getElementById('kegiatanShift')?.value || ''
+    };
+    
+    try {
+        await fetch(GAS_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(balancingData)
+        });
+        
+        progress.complete();
+        showCustomAlert('✓ Data Balancing berhasil dikirim!', 'success');
+        clearBalancingDraft();
+        
+        setTimeout(() => {
+            const waMessage = encodeURIComponent(formatWhatsAppMessage(balancingData));
+            window.open(`https://wa.me/6281382160345?text=${waMessage}`, '_blank');
+            navigateTo('homeScreen');
+        }, 1000);
+        
+    } catch (error) {
+        progress.error();
+        showCustomAlert('Gagal mengirim ke server.', 'error');
+    }
 }
