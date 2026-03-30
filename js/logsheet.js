@@ -12,12 +12,13 @@ function fetchLastData() {
     const callbackName = 'jsonp_' + Date.now();
     
     window[callbackName] = (data) => {
-        clearTimeout(timeout);
-        lastData = data;
-        updateStatusIndicator(true);
-        cleanupJSONP(callbackName);
-        renderMenu();
-    };
+    clearTimeout(timeout);
+    // Tambahkan .data agar variabel berisi data logsheet aslinya
+    lastData = data.success ? data.data : {}; 
+    updateStatusIndicator(true);
+    cleanupJSONP(callbackName);
+    renderMenu();
+};
     
     const script = document.createElement('script');
     script.src = `${GAS_URL}?callback=${callbackName}`;
@@ -577,12 +578,13 @@ function fetchLastDataCT() {
     const callbackName = 'jsonp_ct_' + Date.now();
     
     window[callbackName] = (data) => {
-        clearTimeout(timeout);
-        lastDataCT = data;
-        updateStatusIndicator(true);
-        cleanupJSONP(callbackName);
-        renderCTMenu();
-    };
+    clearTimeout(timeout);
+    // Tambahkan .data
+    lastDataCT = data.success ? data.data : {}; 
+    updateStatusIndicator(true);
+    cleanupJSONP(callbackName);
+    renderCTMenu();
+};
     
     const script = document.createElement('script');
     script.src = `${GAS_URL}?action=getLastCT&callback=${callbackName}`;
