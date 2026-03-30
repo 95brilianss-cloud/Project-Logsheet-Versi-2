@@ -70,8 +70,20 @@ function setDefaultDateTime() {
     const dateInput = document.getElementById('balancingDate');
     const timeInput = document.getElementById('balancingTime');
     
-    if (dateInput && !dateInput.value) dateInput.value = now.toISOString().split('T')[0];
-    if (timeInput && !timeInput.value) timeInput.value = now.toTimeString().slice(0, 5);
+    if (dateInput) {
+        // Menggunakan format lokal YYYY-MM-DD tanpa zona waktu UTC
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
+    }
+    
+    if (timeInput) {
+        // Format jam lokal HH:mm
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
+    }
 }
 
 // ============================================
