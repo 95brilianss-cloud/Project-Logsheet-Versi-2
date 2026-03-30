@@ -197,20 +197,20 @@ function updateDraftStatusIndicator() {
 async function loadLastBalancingData(fromSpreadsheet = true) {
     const loader = document.getElementById('loader');
     const loaderText = document.querySelector('.loader-text h3');
+    const timeLabel = document.getElementById('balancingLastTimeLabel');
+    const dateLabel = document.getElementById('balancingLastDateLabel');
     
     if (loader) loader.style.display = 'flex';
     if (loaderText) loaderText.textContent = 'Mengambil data terakhir...';
     
     try {
         let lastDataFetch = null;
-        let source = 'local';
         
         if (fromSpreadsheet && navigator.onLine) {
             try {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 10000);
                 
-                // GAS_URL dari config.js
                 const response = await fetch(`${GAS_URL}?action=getLastBalancing&t=${Date.now()}`, {
                     signal: controller.signal
                 });
@@ -220,7 +220,10 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
                 
                 if (result.success && result.data) {
                     lastDataFetch = result.data;
-                    source = 'spreadsheet';
+                    
+                    // UPDATE LABEL HEADER (Memperbaiki Jam & Tgl --)
+                    if (timeLabel && lastDataFetch._lastTime) timeLabel.textContent = lastDataFetch._lastTime;
+                    if (dateLabel && lastDataFetch.Tanggal) dateLabel.textContent = lastDataFetch.Tanggal;
                 }
             } catch (fetchError) {
                 console.warn('Gagal fetch dari spreadsheet:', fetchError);
@@ -229,10 +232,7 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
         
         if (!lastDataFetch) {
             const history = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING_HISTORY) || '[]');
-            if (history.length > 0) {
-                lastDataFetch = history[history.length - 1];
-                source = 'local';
-            }
+            if (history.length > 0) lastDataFetch = history[history.length - 1];
         }
         
         if (!lastDataFetch) {
@@ -291,19 +291,11 @@ async function loadLastBalancingData(fromSpreadsheet = true) {
         });
         
         const eksporEl = document.getElementById('eksporMW');
-        if (eksporEl && eksporEl.value) {
-            handleEksporInput(eksporEl);
-        }
+        if (eksporEl && eksporEl.value) handleEksporInput(eksporEl);
         
         calculateLPBalance();
         saveBalancingDraft();
-        
-        const msg = source === 'spreadsheet' 
-            ? `✓ Data terakhir dari server dimuat.`
-            : `✓ Data terakhir dari penyimpanan lokal dimuat.`;
-        
-        // showCustomAlert dari utils.js
-        showCustomAlert(msg, 'success');
+        showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
         
     } catch (e) {
         console.error('Error loading last data:', e);
