@@ -180,18 +180,23 @@ function renderSampleJobs() {
 
 function goToLogsheetTurbin() {
     navigateTo('areaListScreen');
-    if (typeof renderMenu === 'function') {
-        renderMenu(); // Memanggil fungsi dari logsheet.js
+    // TAMBAHKAN INI: Ambil data terbaru dari server sebelum render menu
+    if (typeof fetchLastData === 'function') {
+        fetchLastData(); 
+    } else if (typeof renderMenu === 'function') {
+        renderMenu();
     }
 }
 
 function goToLogsheetCT() {
     navigateTo('ctAreaListScreen');
-    if (typeof renderCTMenu === 'function') {
+    // TAMBAHKAN INI: Ambil data terbaru CT dari server
+    if (typeof fetchLastDataCT === 'function') {
+        fetchLastDataCT();
+    } else if (typeof renderCTMenu === 'function') {
         renderCTMenu();
     }
 }
-
 function toggleBranchMenuPopup() {
     const overlay = document.getElementById('branchMenuPopupOverlay');
     if (overlay) overlay.classList.toggle('hidden');
