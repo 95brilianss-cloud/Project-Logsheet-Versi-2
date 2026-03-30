@@ -203,7 +203,6 @@ function loadLastBalancingData() {
     if (loader) loader.style.display = 'flex';
     if (loaderText) loaderText.textContent = 'Mengambil data terakhir...';
     
-    // Gunakan JSONP agar tidak terblokir CORS oleh Google Apps Script
     const callbackName = 'jsonp_balancing_' + Date.now();
     
     window[callbackName] = (result) => {
@@ -212,54 +211,54 @@ function loadLastBalancingData() {
         if (result.success && result.data) {
             const lastDataFetch = result.data;
             
-            // UPDATE LABEL HEADER (Tgl & Jam di bagian atas form)
+            // 1. UPDATE LABEL HEADER
             if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--';
-            if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';}
-        
-        // Mapping field dari server ke form
-        const fieldMapping = {
-            'loadMW': lastDataFetch['Load_MW'],
-            'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
-            'plnMW': lastDataFetch['PLN_MW'],
-            'ubbMW': lastDataFetch['UBB_MW'],
-            'pieMW': lastDataFetch['PIE_MW'],
-            'tg65MW': lastDataFetch['TG65_MW'],
-            'tg66MW': lastDataFetch['TG66_MW'],
-            'gtgMW': lastDataFetch['GTG_MW'],
-            'ss6500MW': lastDataFetch['SS6500_MW'],
-            'ss2000Via': lastDataFetch['SS2000_Via'],
-            'activePowerMW': lastDataFetch['Active_Power_MW'],
-            'reactivePowerMVAR': lastDataFetch['Reactive_Power_MVAR'],
-            'currentS': lastDataFetch['Current_S_A'],
-            'voltageV': lastDataFetch['Voltage_V'],
-            'hvs65l02MW': lastDataFetch['HVS65_L02_MW'],
-            'hvs65l02Current': lastDataFetch['HVS65_L02_Current_A'],
-            'total3BMW': lastDataFetch['Total_3B_MW'],
-            'fq1105': lastDataFetch['Produksi_Steam_SA_t/h'],
-            'stgSteam': lastDataFetch['STG_Steam_t/h'],
-            'pa2Steam': lastDataFetch['PA2_Steam_t/h'],
-            'puri2Steam': lastDataFetch['Puri2_Steam_t/h'],
-            'melterSA2': lastDataFetch['Melter_SA2_t/h'],
-            'ejectorSteam': lastDataFetch['Ejector_t/h'],
-            'glandSealSteam': lastDataFetch['Gland_Seal_t/h'],
-            'deaeratorSteam': lastDataFetch['Deaerator_t/h'],
-            'dumpCondenser': lastDataFetch['Dump_Condenser_t/h'],
-            'pcv6105': lastDataFetch['PCV6105_t/h'],
-            'pi6122': lastDataFetch['PI6122_kg/cm2'],
-            'ti6112': lastDataFetch['TI6112_C'],
-            'ti6146': lastDataFetch['TI6146_C'],
-            'ti6126': lastDataFetch['TI6126_C'],
-            'axialDisplacement': lastDataFetch['Axial_Displacement_mm'],
-            'vi6102': lastDataFetch['VI6102_μm'],
-            'te6134': lastDataFetch['TE6134_C'],
-            'ctSuFan': lastDataFetch['CT_SU_Fan'],
-            'ctSuPompa': lastDataFetch['CT_SU_Pompa'],
-            'ctSaFan': lastDataFetch['CT_SA_Fan'],
-            'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
-            'kegiatanShift': lastDataFetch['Kegiatan_Shift']
-        };
-        
-        Object.entries(fieldMapping).forEach(([id, value]) => {
+            if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';
+            
+            // 2. MAPPING KE INPUT FORM
+            const fieldMapping = {
+                'loadMW': lastDataFetch['Load_MW'],
+                'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
+                'plnMW': lastDataFetch['PLN_MW'],
+                'ubbMW': lastDataFetch['UBB_MW'],
+                'pieMW': lastDataFetch['PIE_MW'],
+                'tg65MW': lastDataFetch['TG65_MW'],
+                'tg66MW': lastDataFetch['TG66_MW'],
+                'gtgMW': lastDataFetch['GTG_MW'],
+                'ss6500MW': lastDataFetch['SS6500_MW'],
+                'ss2000Via': lastDataFetch['SS2000_Via'],
+                'activePowerMW': lastDataFetch['Active_Power_MW'],
+                'reactivePowerMVAR': lastDataFetch['Reactive_Power_MVAR'],
+                'currentS': lastDataFetch['Current_S_A'],
+                'voltageV': lastDataFetch['Voltage_V'],
+                'hvs65l02MW': lastDataFetch['HVS65_L02_MW'],
+                'hvs65l02Current': lastDataFetch['HVS65_L02_Current_A'],
+                'total3BMW': lastDataFetch['Total_3B_MW'],
+                'fq1105': lastDataFetch['Produksi_Steam_SA_t/h'],
+                'stgSteam': lastDataFetch['STG_Steam_t/h'],
+                'pa2Steam': lastDataFetch['PA2_Steam_t/h'],
+                'puri2Steam': lastDataFetch['Puri2_Steam_t/h'],
+                'melterSA2': lastDataFetch['Melter_SA2_t/h'],
+                'ejectorSteam': lastDataFetch['Ejector_t/h'],
+                'glandSealSteam': lastDataFetch['Gland_Seal_t/h'],
+                'deaeratorSteam': lastDataFetch['Deaerator_t/h'],
+                'dumpCondenser': lastDataFetch['Dump_Condenser_t/h'],
+                'pcv6105': lastDataFetch['PCV6105_t/h'],
+                'pi6122': lastDataFetch['PI6122_kg/cm2'],
+                'ti6112': lastDataFetch['TI6112_C'],
+                'ti6146': lastDataFetch['TI6146_C'],
+                'ti6126': lastDataFetch['TI6126_C'],
+                'axialDisplacement': lastDataFetch['Axial_Displacement_mm'],
+                'vi6102': lastDataFetch['VI6102_μm'],
+                'te6134': lastDataFetch['TE6134_C'],
+                'ctSuFan': lastDataFetch['CT_SU_Fan'],
+                'ctSuPompa': lastDataFetch['CT_SU_Pompa'],
+                'ctSaFan': lastDataFetch['CT_SA_Fan'],
+                'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
+                'kegiatanShift': lastDataFetch['Kegiatan_Shift']
+            };
+            
+            Object.entries(fieldMapping).forEach(([id, value]) => {
                 const el = document.getElementById(id);
                 if (el && value !== undefined && value !== null && value !== '') {
                     el.value = value;
