@@ -5,7 +5,7 @@
 // ============================================
 // 1. APP CONFIGURATION
 // ============================================
-const APP_VERSION = '2.2.7';
+const APP_VERSION = '2.2.8';
 const APP_NAME = 'Turbine Logsheet Pro';
 
 const AUTH_CONFIG = {
