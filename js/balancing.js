@@ -2,19 +2,27 @@
    TURBINE LOGSHEET PRO - BALANCING MODULE
    ============================================ */
 
-// 1. INITIALIZATION
+// ============================================
+// 1. INITIALIZATION & SHIFT DETECTION
+// ============================================
+
 function initBalancingScreen() {
     if (!requireAuth()) return;
+    
     const balancingUser = document.getElementById('balancingUser');
+    // currentUser berasal dari state.js
     if (balancingUser && currentUser) balancingUser.textContent = currentUser.name;
     
-    detectShift(); 
+    detectShift();
     
+    // DRAFT_KEYS berasal dari config.js
     const draftData = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING));
-    if (draftData) {
+    const hasDraft = draftData !== null;
+    
+    if (hasDraft) {
         loadBalancingDraft();
     } else {
-        loadLastBalancingData(); 
+        loadLastBalancingData();
     }
     
     calculateLPBalance();
@@ -25,61 +33,201 @@ function initBalancingScreen() {
 function detectShift() {
     const hour = new Date().getHours();
     let shift = 3;
-    if (hour >= 7 && hour < 15) shift = 1;
-    else if (hour >= 15 && hour < 23) shift = 2;
+    let shiftText = "Shift 3 (23:00 - 07:00)";
     
-    currentShift = shift; 
+    if (hour >= 7 && hour < 15) {
+        shift = 1;
+        shiftText = "Shift 1 (07:00 - 15:00)";
+    } else if (hour >= 15 && hour < 23) {
+        shift = 2;
+        shiftText = "Shift 2 (15:00 - 23:00)";
+    }
+    
+    currentShift = shift; // Disimpan ke state.js
+    
     const badge = document.getElementById('currentShiftBadge');
     const info = document.getElementById('balancingShiftInfo');
-    if (badge) badge.textContent = `SHIFT ${shift}`;
-    if (info) info.textContent = `Shift ${shift} • Auto Save Aktif`;
+    const kegiatanNum = document.getElementById('kegiatanShiftNum');
     
-    if (!document.getElementById('balancingDate').value) setDefaultDateTime();
+    if (badge) badge.textContent = `SHIFT ${shift}`;
+    if (info) info.textContent = `${shiftText} • Auto Save Aktif`;
+    if (kegiatanNum) kegiatanNum.textContent = shift;
+    
+    if (badge) {
+        const colors = [
+            'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+            'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+        ];
+        badge.style.background = colors[shift - 1];
+    }
+    
+    setDefaultDateTime();
 }
 
 function setDefaultDateTime() {
     const now = new Date();
     const dateInput = document.getElementById('balancingDate');
     const timeInput = document.getElementById('balancingTime');
+    
     if (dateInput) {
+        // Menggunakan format lokal YYYY-MM-DD tanpa zona waktu UTC
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
         dateInput.value = `${year}-${month}-${day}`;
     }
+    
     if (timeInput) {
-        timeInput.value = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        // Format jam lokal HH:mm
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
     }
 }
 
-// 2. FETCH DATA (Sinkron dengan Header GAS: Date & Time)
+// ============================================
+// 2. DRAFT & AUTO-SAVE MANAGEMENT
+// ============================================
+
+function saveBalancingDraft() {
+    try {
+        const draftData = {};
+        
+        // BALANCING_FIELDS dari config.js
+        BALANCING_FIELDS.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element) {
+                draftData[fieldId] = element.value;
+            }
+        });
+        
+        draftData._shift = currentShift;
+        draftData._savedAt = new Date().toISOString();
+        draftData._user = currentUser ? currentUser.name : 'Unknown';
+        draftData._userId = currentUser ? currentUser.id : 'unknown';
+        
+        localStorage.setItem(DRAFT_KEYS.BALANCING, JSON.stringify(draftData));
+        updateDraftStatusIndicator();
+    } catch (e) {
+        console.error('Error saving balancing draft:', e);
+    }
+}
+
+function loadBalancingDraft() {
+    try {
+        const draftData = JSON.parse(localStorage.getItem(DRAFT_KEYS.BALANCING));
+        if (!draftData) return false;
+        
+        let loadedCount = 0;
+        BALANCING_FIELDS.forEach(fieldId => {
+            const element = document.getElementById(fieldId);
+            if (element && draftData[fieldId] !== undefined && draftData[fieldId] !== '') {
+                element.value = draftData[fieldId];
+                loadedCount++;
+            }
+        });
+        
+        const eksporEl = document.getElementById('eksporMW');
+        if (eksporEl && eksporEl.value) {
+            handleEksporInput(eksporEl);
+        }
+        
+        calculateLPBalance();
+        return loadedCount > 0;
+    } catch (e) {
+        console.error('Error loading balancing draft:', e);
+        return false;
+    }
+}
+
+function clearBalancingDraft() {
+    try {
+        localStorage.removeItem(DRAFT_KEYS.BALANCING);
+        updateDraftStatusIndicator();
+    } catch (e) {
+        console.error('Error clearing balancing draft:', e);
+    }
+}
+
+function setupBalancingAutoSave() {
+    if (balancingAutoSaveInterval) {
+        clearInterval(balancingAutoSaveInterval);
+    }
+    
+    let lastData = '';
+    balancingAutoSaveInterval = setInterval(() => {
+        const currentData = JSON.stringify(getCurrentBalancingData());
+        if (currentData !== lastData && hasBalancingData()) {
+            saveBalancingDraft();
+            lastData = currentData;
+        }
+    }, 10000); // Save setiap 10 detik jika ada perubahan
+    
+    window.addEventListener('beforeunload', () => {
+        if (hasBalancingData()) saveBalancingDraft();
+    });
+    
+    const formContainer = document.getElementById('balancingScreen');
+    if (formContainer) {
+        let timeout;
+        formContainer.addEventListener('input', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => saveBalancingDraft(), 1000);
+            }
+        });
+    }
+}
+
+function getCurrentBalancingData() {
+    const data = {};
+    BALANCING_FIELDS.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) data[fieldId] = element.value;
+    });
+    return data;
+}
+
+function hasBalancingData() {
+    const data = getCurrentBalancingData();
+    return Object.values(data).some(val => val !== '' && val !== null && val !== undefined);
+}
+
+function updateDraftStatusIndicator() {
+    const indicator = document.getElementById('draftStatusIndicator');
+    if (indicator) {
+        const hasDraft = localStorage.getItem(DRAFT_KEYS.BALANCING) !== null;
+        indicator.style.display = hasDraft ? 'flex' : 'none';
+    }
+}
+
+/* ============================================
+   TURBINE LOGSHEET PRO - BALANCING MODULE
+   ============================================ */
+
 function loadLastBalancingData() {
     const loader = document.getElementById('loader');
     const timeLabel = document.getElementById('balancingLastTimeLabel');
     const dateLabel = document.getElementById('balancingLastDateLabel');
     
     if (loader) loader.style.display = 'flex';
+
     const callbackName = 'jsonp_balancing_' + Date.now();
     
     window[callbackName] = (result) => {
         if (loader) loader.style.display = 'none';
+        
         if (result.success && result.data) {
             const lastDataFetch = result.data;
             
-            // Update Label Biru di Atas (Gunakan _lastTime dari GAS)
-            if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--'; [cite: 204]
-            if (dateLabel) {
-                let tgl = lastDataFetch.Date || '';
-                dateLabel.textContent = tgl.includes('T') ? tgl.split('T')[0] : tgl || '--/--/----';
-            }
+            // 1. UPDATE LABEL INFORMASI (Biru di bagian atas)
+            if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--';
+            if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';
 
-            // Update Input Form agar sama dengan jam server
-            if (document.getElementById('balancingDate') && lastDataFetch.Date) {
-                document.getElementById('balancingDate').value = lastDataFetch.Date.split('T')[0];
-            }
-            if (document.getElementById('balancingTime') && lastDataFetch.Time) {
-                document.getElementById('balancingTime').value = lastDataFetch.Time;
-            }
+            // 2. UPDATE INPUT FORM (Tanggal & Jam mengikuti Data Server)
+            if (document.getElementById('balancingDate')) document.getElementById('balancingDate').value = lastDataFetch.Tanggal;
+            if (document.getElementById('balancingTime')) document.getElementById('balancingTime').value = lastDataFetch.Jam;
             
             // 3. Mapping field dari server ke input form (Kecuali Tanggal/Jam input)
             const fieldMapping = {
@@ -123,12 +271,14 @@ function loadLastBalancingData() {
                 'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
                 'kegiatanShift': lastDataFetch['Kegiatan_Shift']
             };
-
-            Object.entries(fieldMapping).forEach(([id, value]) => {
+        
+        Object.entries(fieldMapping).forEach(([id, value]) => {
                 const el = document.getElementById(id);
-                if (el && value !== undefined && value !== null) el.value = value;
+                if (el && value !== undefined && value !== null && value !== '') {
+                    el.value = value;
+                }
             });
-
+            
             calculateLPBalance();
             saveBalancingDraft();
             showCustomAlert('✓ Data & Jam Server dimuat.', 'success');
@@ -137,24 +287,40 @@ function loadLastBalancingData() {
         }
         if (typeof cleanupJSONP === 'function') cleanupJSONP(callbackName);
     };
-
+    
     const script = document.createElement('script');
     script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
+    script.onerror = () => {
+        if (loader) loader.style.display = 'none';
+        setDefaultDateTime();
+    };
     document.body.appendChild(script);
 }
 
-// 3. RESET FORM
 function resetBalancingForm() {
-    if (!confirm('Yakin reset form? Data angka dihapus, Waktu tetap.')) return;
+    if (!confirm('Yakin reset form? Data parameter akan dikosongkan (Tanggal & Jam tetap).')) {
+        return;
+    }
+    
     clearBalancingDraft();
+    
+    // Proses pengosongan field (Melewati input tanggal dan jam)
     BALANCING_FIELDS.forEach(fieldId => {
         if (fieldId !== 'balancingDate' && fieldId !== 'balancingTime') {
             const element = document.getElementById(fieldId);
             if (element) element.value = '';
         }
     });
+
+    // Reset elemen visual tambahan
+    const eksporEl = document.getElementById('eksporMW');
+    if (eksporEl) {
+        eksporEl.setAttribute('data-state', '');
+        eksporEl.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+    }
+    
     calculateLPBalance();
-    showCustomAlert('Data parameter dibersihkan.', 'success');
+    showCustomAlert('Data parameter dibersihkan. Waktu tetap.', 'success');
 }
 // ============================================
 // 4. CALCULATIONS & UI HANDLERS
@@ -410,8 +576,8 @@ async function submitBalancingData() {
         Operator: currentUser ? currentUser.name : 'Unknown',
         Timestamp: new Date().toISOString(),
         
-        Date: document.getElementById('balancingDate')?.value || '', 
-        Time: document.getElementById('balancingTime')?.value || '',
+        Tanggal: document.getElementById('balancingDate')?.value || '',
+        Jam: document.getElementById('balancingTime')?.value || '',
         Shift: currentShift,
         
         'Load_MW': parseFloat(document.getElementById('loadMW')?.value) || 0,
