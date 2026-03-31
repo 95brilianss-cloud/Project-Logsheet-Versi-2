@@ -197,6 +197,13 @@ function goToLogsheetCT() {
         renderCTMenu();
     }
 }
+// === TAMBAHKAN KODE INI DI SINI ===
+function goToBalancing() {
+    navigateTo('balancingScreen');
+    if (typeof initBalancingScreen === 'function') {
+        initBalancingScreen();
+    }
+}
 function toggleBranchMenuPopup() {
     const overlay = document.getElementById('branchMenuPopupOverlay');
     if (overlay) overlay.classList.toggle('hidden');
@@ -348,7 +355,8 @@ window.addEventListener('appinstalled', (evt) => {
 
 window.addEventListener('DOMContentLoaded', () => {
     initState();
-    
+    loadTodayJobs(); // <=== TAMBAHKAN BARIS INI DI SINI
+   
     const versionDisplay = document.getElementById('versionDisplay');
     if (versionDisplay) versionDisplay.textContent = APP_VERSION;
     
