@@ -29,6 +29,7 @@ function initBalancingScreen() {
     calculateLPBalance();
     setupBalancingAutoSave();
     setTimeout(updateDraftStatusIndicator, 100);
+    startRealtimeClock();
 }
 
 function detectShift() {
@@ -702,4 +703,37 @@ async function submitBalancingData() {
             showCustomAlert('Gagal mengirim. Data disimpan lokal.', 'error');
         }, 500);
     }
+}
+
+// Variabel global untuk menyimpan interval jam
+let realtimeClockInterval;
+
+// Fungsi untuk menjalankan jam agar berdetak otomatis
+function startRealtimeClock() {
+    // Hapus interval lama jika ada (mencegah jam berjalan dobel)
+    if (typeof realtimeClockInterval !== 'undefined' && realtimeClockInterval) {
+        clearInterval(realtimeClockInterval);
+    }
+
+    // Jalankan pembaruan setiap 10 detik (10.000 milidetik)
+    realtimeClockInterval = setInterval(() => {
+        const now = new Date();
+        const timeInput = document.getElementById('balancingTime');
+        const dateInput = document.getElementById('balancingDate');
+
+        // Update Jam: Hanya update jika operator TIDAK sedang mengklik/mengetik manual di kotak jam
+        if (timeInput && document.activeElement !== timeInput) {
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            timeInput.value = `${hours}:${minutes}`;
+        }
+
+        // Update Tanggal: Hanya update jika operator TIDAK sedang mengklik/mengetik manual di kotak tanggal
+        if (dateInput && document.activeElement !== dateInput) {
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            dateInput.value = `${year}-${month}-${day}`;
+        }
+    }, 10000); 
 }
