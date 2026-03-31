@@ -202,19 +202,17 @@ function updateDraftStatusIndicator() {
     }
 }
 
-// ============================================
-// 3. FETCH LAST DATA & RESET FORM
-// ============================================
+/* ============================================
+   TURBINE LOGSHEET PRO - BALANCING MODULE
+   ============================================ */
 
 function loadLastBalancingData() {
     const loader = document.getElementById('loader');
-    const loaderText = document.querySelector('.loader-text h3');
     const timeLabel = document.getElementById('balancingLastTimeLabel');
     const dateLabel = document.getElementById('balancingLastDateLabel');
     
     if (loader) loader.style.display = 'flex';
-    if (loaderText) loaderText.textContent = 'Mengambil data terakhir...';
-    
+
     const callbackName = 'jsonp_balancing_' + Date.now();
     
     window[callbackName] = (result) => {
@@ -223,11 +221,15 @@ function loadLastBalancingData() {
         if (result.success && result.data) {
             const lastDataFetch = result.data;
             
-            // 1. UPDATE LABEL HEADER
+            // 1. UPDATE LABEL INFORMASI (Biru di bagian atas)
             if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--';
             if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';
+
+            // 2. UPDATE INPUT FORM (Tanggal & Jam mengikuti Data Server)
+            if (document.getElementById('balancingDate')) document.getElementById('balancingDate').value = lastDataFetch.Tanggal;
+            if (document.getElementById('balancingTime')) document.getElementById('balancingTime').value = lastDataFetch.Jam;
             
-            // 2. MAPPING KE INPUT FORM
+            // 3. Mapping field dari server ke input form (Kecuali Tanggal/Jam input)
             const fieldMapping = {
                 'loadMW': lastDataFetch['Load_MW'],
                 'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
@@ -269,24 +271,20 @@ function loadLastBalancingData() {
                 'ctSaPompa': lastDataFetch['CT_SA_Pompa'],
                 'kegiatanShift': lastDataFetch['Kegiatan_Shift']
             };
-            
-            Object.entries(fieldMapping).forEach(([id, value]) => {
+        
+        Object.entries(fieldMapping).forEach(([id, value]) => {
                 const el = document.getElementById(id);
                 if (el && value !== undefined && value !== null && value !== '') {
                     el.value = value;
                 }
             });
             
-            const eksporEl = document.getElementById('eksporMW');
-            if (eksporEl && eksporEl.value) handleEksporInput(eksporEl);
-            
             calculateLPBalance();
             saveBalancingDraft();
-            showCustomAlert('✓ Data terakhir berhasil dimuat.', 'success');
+            showCustomAlert('✓ Data & Jam Server dimuat.', 'success');
         } else {
             setDefaultDateTime();
         }
-        
         if (typeof cleanupJSONP === 'function') cleanupJSONP(callbackName);
     };
     
@@ -300,46 +298,30 @@ function loadLastBalancingData() {
 }
 
 function resetBalancingForm() {
-    if (!confirm('Yakin reset form? Semua data akan dikosongkan dan draft akan dihapus.')) {
+    if (!confirm('Yakin reset form? Data parameter akan dikosongkan (Tanggal & Jam tetap).')) {
         return;
     }
     
     clearBalancingDraft();
-    setDefaultDateTime();
     
+    // Proses pengosongan field (Melewati input tanggal dan jam)
     BALANCING_FIELDS.forEach(fieldId => {
-        const element = document.getElementById(fieldId);
-        if (element) element.value = '';
+        if (fieldId !== 'balancingDate' && fieldId !== 'balancingTime') {
+            const element = document.getElementById(fieldId);
+            if (element) element.value = '';
+        }
     });
-    
-    const selects = ['ss2000Via', 'melterSA2', 'ejectorSteam', 'glandSealSteam'];
-    selects.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.selectedIndex = 0;
-    });
-    
+
+    // Reset elemen visual tambahan
     const eksporEl = document.getElementById('eksporMW');
-    const eksporLabel = document.getElementById('eksporLabel');
-    const eksporHint = document.getElementById('eksporHint');
-    
     if (eksporEl) {
         eksporEl.setAttribute('data-state', '');
         eksporEl.style.borderColor = 'rgba(148, 163, 184, 0.2)';
-        eksporEl.style.background = 'rgba(15, 23, 42, 0.6)';
-    }
-    if (eksporLabel) {
-        eksporLabel.textContent = 'Ekspor/Impor (MW)';
-        eksporLabel.style.color = '#94a3b8';
-    }
-    if (eksporHint) {
-        eksporHint.innerHTML = '💡 <strong>Minus (-) = Ekspor</strong> | <strong>Plus (+) = Impor</strong>';
-        eksporHint.style.color = '#94a3b8';
     }
     
     calculateLPBalance();
-    showCustomAlert('Form berhasil direset! Semua field dikosongkan.', 'success');
+    showCustomAlert('Data parameter dibersihkan. Waktu tetap.', 'success');
 }
-
 // ============================================
 // 4. CALCULATIONS & UI HANDLERS
 // ============================================
