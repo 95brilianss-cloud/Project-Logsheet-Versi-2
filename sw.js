@@ -4,7 +4,7 @@
 
 // UPDATE MANUAL: Ubah nilai versi ini setiap kali Anda merilis pembaruan.
 // Perubahan pada file sw.js ini akan memicu browser untuk mendeteksi versi baru.
-const VERSION = '2.2.3'; 
+const VERSION = '2.2.4'; 
 const CACHE_NAME = `turbine-logsheets-v${VERSION}`;
 
 // ============================================
