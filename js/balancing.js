@@ -122,6 +122,9 @@ function loadBalancingDraft() {
         
         let loadedCount = 0;
         BALANCING_FIELDS.forEach(fieldId => {
+            // === TAMBAHKAN BARIS INI: Lewati pengisian jam & tanggal dari draft ===
+            if (fieldId === 'balancingDate' || fieldId === 'balancingTime') return; 
+
             const element = document.getElementById(fieldId);
             if (element && draftData[fieldId] !== undefined && draftData[fieldId] !== '') {
                 element.value = draftData[fieldId];
@@ -714,6 +717,10 @@ function startRealtimeClock() {
     if (typeof realtimeClockInterval !== 'undefined' && realtimeClockInterval) {
         clearInterval(realtimeClockInterval);
     }
+
+    // === TAMBAHKAN BARIS INI ===
+    // Update jam detik ini juga agar tidak menunggu jeda 10 detik pertama
+    updateBalancingDateTime(); 
 
     // Jalankan pembaruan setiap 10 detik (10.000 milidetik)
     realtimeClockInterval = setInterval(() => {
