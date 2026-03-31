@@ -85,7 +85,21 @@ function setDefaultDateTime() {
         timeInput.value = `${hours}:${minutes}`;
     }
 }
-
+// Tambahkan fungsi ini di js/balancing.js atau js/main.js
+function updateBalancingDateTime() {
+    const now = new Date();
+    const dateInput = document.getElementById('balancingDate');
+    const timeInput = document.getElementById('balancingTime');
+    
+    if (dateInput) {
+        // Format YYYY-MM-DD untuk input type="date"
+        dateInput.value = now.toISOString().split('T')[0];
+    }
+    if (timeInput) {
+        // Format HH:MM untuk input type="time"
+        timeInput.value = now.toTimeString().slice(0, 5);
+    }
+}
 // ============================================
 // 2. DRAFT & AUTO-SAVE MANAGEMENT
 // ============================================
