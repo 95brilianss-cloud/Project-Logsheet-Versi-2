@@ -1,5 +1,6 @@
 /* ============================================
    TURBINE LOGSHEET PRO - BALANCING MODULE
+   FILE: js/balancing.js
    ============================================ */
 
 // ============================================
@@ -62,44 +63,29 @@ function detectShift() {
         badge.style.background = colors[shift - 1];
     }
     
-    setDefaultDateTime();
+    // Panggil fungsi waktu yang sudah disatukan
+    updateBalancingDateTime();
 }
 
-function setDefaultDateTime() {
-    const now = new Date();
-    const dateInput = document.getElementById('balancingDate');
-    const timeInput = document.getElementById('balancingTime');
-    
-    if (dateInput) {
-        // Menggunakan format lokal YYYY-MM-DD tanpa zona waktu UTC
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        dateInput.value = `${year}-${month}-${day}`;
-    }
-    
-    if (timeInput) {
-        // Format jam lokal HH:mm
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        timeInput.value = `${hours}:${minutes}`;
-    }
-}
-// Tambahkan fungsi ini di js/balancing.js atau js/main.js
 function updateBalancingDateTime() {
     const now = new Date();
     const dateInput = document.getElementById('balancingDate');
     const timeInput = document.getElementById('balancingTime');
     
+    // Gunakan getFullYear dll untuk memastikan waktu lokal (bukan UTC)
     if (dateInput) {
-        // Format YYYY-MM-DD untuk input type="date"
-        dateInput.value = now.toISOString().split('T')[0];
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        dateInput.value = `${year}-${month}-${day}`;
     }
     if (timeInput) {
-        // Format HH:MM untuk input type="time"
-        timeInput.value = now.toTimeString().slice(0, 5);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        timeInput.value = `${hours}:${minutes}`;
     }
 }
+
 // ============================================
 // 2. DRAFT & AUTO-SAVE MANAGEMENT
 // ============================================
@@ -165,12 +151,12 @@ function clearBalancingDraft() {
 }
 
 function setupBalancingAutoSave() {
-    if (balancingAutoSaveInterval) {
+    if (typeof balancingAutoSaveInterval !== 'undefined' && balancingAutoSaveInterval) {
         clearInterval(balancingAutoSaveInterval);
     }
     
     let lastData = '';
-    balancingAutoSaveInterval = setInterval(() => {
+    window.balancingAutoSaveInterval = setInterval(() => {
         const currentData = JSON.stringify(getCurrentBalancingData());
         if (currentData !== lastData && hasBalancingData()) {
             saveBalancingDraft();
@@ -216,16 +202,16 @@ function updateDraftStatusIndicator() {
     }
 }
 
-/* ============================================
-   TURBINE LOGSHEET PRO - BALANCING MODULE
-   ============================================ */
+// ============================================
+// 3. SERVER DATA & RESET HANDLERS
+// ============================================
 
-function loadLastBalancingData() {
+function loadLastBalancingData(isManualLoad = false) {
     const loader = document.getElementById('loader');
     const timeLabel = document.getElementById('balancingLastTimeLabel');
     const dateLabel = document.getElementById('balancingLastDateLabel');
     
-    if (loader) loader.style.display = 'flex';
+    if (loader && isManualLoad) loader.style.display = 'flex';
 
     const callbackName = 'jsonp_balancing_' + Date.now();
     
@@ -235,15 +221,14 @@ function loadLastBalancingData() {
         if (result.success && result.data) {
             const lastDataFetch = result.data;
             
-            // 1. UPDATE LABEL INFORMASI (Biru di bagian atas)
+            // 1. UPDATE LABEL INFORMASI TERAKHIR DI SERVER (Biru di bagian atas jika ada)
             if (timeLabel) timeLabel.textContent = lastDataFetch._lastTime || '--:--';
             if (dateLabel) dateLabel.textContent = lastDataFetch.Tanggal || '--/--/----';
 
-            // 2. UPDATE INPUT FORM (Tanggal & Jam mengikuti Data Server)
-            if (document.getElementById('balancingDate')) document.getElementById('balancingDate').value = lastDataFetch.Tanggal;
-            if (document.getElementById('balancingTime')) document.getElementById('balancingTime').value = lastDataFetch.Jam;
+            // Dihapus: Jangan timpa input form tanggal dan jam agar tidak menggunakan data masa lalu
+            // (Input harus menggunakan waktu operator saat ini)
             
-            // 3. Mapping field dari server ke input form (Kecuali Tanggal/Jam input)
+            // 2. Mapping field dari server ke input form
             const fieldMapping = {
                 'loadMW': lastDataFetch['Load_MW'],
                 'eksporMW': lastDataFetch['Ekspor_Impor_MW'],
@@ -286,19 +271,30 @@ function loadLastBalancingData() {
                 'kegiatanShift': lastDataFetch['Kegiatan_Shift']
             };
         
-        Object.entries(fieldMapping).forEach(([id, value]) => {
+            Object.entries(fieldMapping).forEach(([id, value]) => {
                 const el = document.getElementById(id);
                 if (el && value !== undefined && value !== null && value !== '') {
                     el.value = value;
                 }
             });
             
+            // Pastikan input ekspor berjalan UI-nya
+            const eksporEl = document.getElementById('eksporMW');
+            if (eksporEl && eksporEl.value) {
+                handleEksporInput(eksporEl);
+            }
+                
             calculateLPBalance();
             saveBalancingDraft();
-            showCustomAlert('✓ Data & Jam Server dimuat.', 'success');
-        } else {
-            setDefaultDateTime();
+            if (isManualLoad) showCustomAlert('✓ Data Server dimuat.', 'success');
+        } 
+        
+        // 3. Pastikan Form Input Tanggal dan Jam terisi waktu saat ini
+        const dateInput = document.getElementById('balancingDate');
+        if (!dateInput || !dateInput.value) {
+            updateBalancingDateTime();
         }
+
         if (typeof cleanupJSONP === 'function') cleanupJSONP(callbackName);
     };
     
@@ -306,7 +302,10 @@ function loadLastBalancingData() {
     script.src = `${GAS_URL}?action=getLastBalancing&callback=${callbackName}&t=${Date.now()}`;
     script.onerror = () => {
         if (loader) loader.style.display = 'none';
-        setDefaultDateTime();
+        
+        // Pastikan terisi meskipun gagal fetch
+        const dateInput = document.getElementById('balancingDate');
+        if (!dateInput || !dateInput.value) updateBalancingDateTime();
     };
     document.body.appendChild(script);
 }
@@ -331,11 +330,14 @@ function resetBalancingForm() {
     if (eksporEl) {
         eksporEl.setAttribute('data-state', '');
         eksporEl.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+        eksporEl.style.background = 'rgba(15, 23, 42, 0.6)';
+        handleEksporInput(eksporEl); // Trigger ulang UI
     }
     
     calculateLPBalance();
     showCustomAlert('Data parameter dibersihkan. Waktu tetap.', 'success');
 }
+
 // ============================================
 // 4. CALCULATIONS & UI HANDLERS
 // ============================================
@@ -498,21 +500,29 @@ function formatWhatsAppMessage(data) {
         return parseInt(num).toLocaleString('id-ID');
     };
     
-    const tglParts = data.Tanggal.split('-');
+    // PERLINDUNGAN: Jika data.Tanggal kosong/undefined, gunakan tanggal hari ini
+    const now = new Date();
+    const fallbackDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const tglRaw = data.Tanggal || fallbackDate;
+    
+    const tglParts = tglRaw.split('-');
     const bulanIndo = {
         '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
         '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
         '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
     };
-    const tglIndo = `${tglParts[2]} ${bulanIndo[tglParts[1]]} ${tglParts[0]}`;
+    
+    // Jika split gagal (format salah), gunakan format mentah
+    const tglIndo = tglParts.length === 3 ? `${tglParts[2]} ${bulanIndo[tglParts[1]]} ${tglParts[0]}` : tglRaw;
+    const jamSafe = data.Jam || '--:--';
     
     let message = `*Update STG 17,5 MW*\n`;
-    message += `Tgl ${tglIndo}\n`;
-    message += `Jam ${data.Jam}\n\n`;
+    message += `Tgl: ${tglIndo}\n`;
+    message += `Jam: ${jamSafe}\n\n`;
     
     message += `*Output Power STG 17,5*\n`;
     message += `⠂ Load = ${formatNum(data.Load_MW)} MW\n`;
-    message += `⠂ ${data.Ekspor_Impor_Status} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
+    message += `⠂ ${data.Ekspor_Impor_Status || 'Ekspor/Impor'} = ${formatNum(Math.abs(data.Ekspor_Impor_MW), 3)} MW\n\n`;
     
     message += `*Balance Power SCADA*\n`;
     message += `⠂ PLN = ${formatNum(data.PLN_MW)}MW\n`;
@@ -559,7 +569,7 @@ function formatWhatsAppMessage(data) {
     message += `⠂ CT SU = Fan : ${formatInt(data['CT_SU_Fan'])} & Pompa : ${formatInt(data['CT_SU_Pompa'])}\n`;
     message += `⠂ CT SA = Fan : ${formatInt(data['CT_SA_Fan'])} & Pompa : ${formatInt(data['CT_SA_Pompa'])}\n\n`;
     
-    message += `*Kegiatan Shift ${data.Shift}*\n`;
+    message += `*Kegiatan Shift ${data.Shift || currentShift}*\n`;
     message += data.Kegiatan_Shift || '-';
     
     return message;
@@ -567,6 +577,11 @@ function formatWhatsAppMessage(data) {
 
 async function submitBalancingData() {
     if (!requireAuth()) return;
+    
+    // Pastikan tanggal dan jam di update ke waktu SAAT pengiriman jika kosong
+    if (!document.getElementById('balancingDate').value || !document.getElementById('balancingTime').value) {
+        updateBalancingDateTime();
+    }
     
     const requiredFields = ['loadMW', 'fq1105', 'stgSteam'];
     for (let id of requiredFields) {
@@ -672,6 +687,7 @@ async function submitBalancingData() {
             const waNumber = '6281382160345';
             window.open(`https://wa.me/${waNumber}?text=${waMessage}`, '_blank');
             navigateTo('homeScreen');
+            clearBalancingDraft(); // Bersihkan draft setelah sukses
         }, 1000);
         
     } catch (error) {
