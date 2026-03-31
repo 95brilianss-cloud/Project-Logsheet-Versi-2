@@ -289,47 +289,21 @@ function setupParamPhotoListeners() {
     }
 }
 
-// js/main.js
-
-const loadingStages = [
-    { percent: 0, text: "Memuat sistem...", stage: "Setup" },
-    { percent: 30, text: "Menghubungkan server...", stage: "Network" },
-    { percent: 60, text: "Sinkronisasi data...", stage: "Sync" },
-    { percent: 90, text: "Menyelesaikan...", stage: "Finalize" },
-    { percent: 100, text: "Siap!", stage: "Ready" }
-];
-
-function updateLoaderProgress(targetPercent) {
-    const progressBar = document.getElementById('loaderProgress');
-    const percentText = document.getElementById('loaderPercent');
-    const statusText = document.getElementById('loaderStatusText');
-    const stageText = document.getElementById('loaderStage');
-    
-    const stage = loadingStages.find(s => targetPercent <= s.percent) || loadingStages[loadingStages.length - 1];
-    
-    if (progressBar) progressBar.style.width = targetPercent + '%';
-    if (percentText) percentText.textContent = targetPercent + '%';
-    if (statusText) statusText.textContent = stage.text;
-    if (stageText) stageText.textContent = stage.stage;
-}
-
 function simulateLoading() {
     let progress = 0;
-    const increment = () => {
-        progress += Math.random() * 15 + 5;
+    const loaderProgress = document.getElementById('loaderProgress');
+    const interval = setInterval(() => {
+        progress += Math.random() * 30;
         if (progress >= 100) {
             progress = 100;
-            updateLoaderProgress(100);
+            clearInterval(interval);
             setTimeout(() => {
                 const loader = document.getElementById('loader');
-                if (loader) loader.classList.add('hidden');
-            }, 800);
-        } else {
-            updateLoaderProgress(Math.floor(progress));
-            setTimeout(increment, 400 + Math.random() * 400);
+                if (loader) loader.style.display = 'none';
+            }, 500);
         }
-    };
-    setTimeout(increment, 1200); // Mulai setelah animasi teks selesai
+        if (loaderProgress) loaderProgress.style.width = progress + '%';
+    }, 300);
 }
 
 // ============================================
