@@ -53,13 +53,19 @@
 <div id="loader" class="loader-overlay">
     <div class="loader-content">
         <div class="loader-logo">
-            <div class="loader-logo-inner">⚡</div>
+            <div class="loader-logo-inner">
+                <img src="icons/Produksi 3B.png" alt="Produksi 3B" class="loader-img">
+            </div>
+            <div class="loader-pulse-ring"></div>
+            <div class="loader-pulse-ring delay"></div>
         </div>
         <div class="loader-text">
             <h3>Asam Sulfat & Utilitas 3B</h3>
-            <p>Sinkronisasi Data...</p>
+            <p id="loaderStatusText">Sinkronisasi Data...</p>
             <div class="progress-bar-loader">
-                <div class="fill" id="loaderProgress" style="width: 0%"></div>
+                <div class="fill" id="loaderProgress" style="width: 0%">
+                    <div class="progress-glow"></div>
+                </div>
             </div>
         </div>
     </div>
