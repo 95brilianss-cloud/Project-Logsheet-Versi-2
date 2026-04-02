@@ -229,17 +229,81 @@ input, textarea, select {
     background: conic-gradient(from 0deg, var(--primary), var(--info), var(--success), var(--primary));
     opacity: 0.3; filter: blur(15px); animation: spin 2s linear infinite;
 }
+/* Container Logo Bulat */
 .loader-logo-inner {
-    width: 100%; height: 100%; border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 48px; position: relative; z-index: 1;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); box-shadow: var(--shadow-glow);
+    width: 85px;
+    height: 85px;
+    background: rgba(255, 255, 255, 0.05); /* Efek kaca transparan */
+    border-radius: 50%; /* Membuat kontainer menjadi bulat sempurna */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Memastikan logo tidak keluar jalur */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3); /* Glow biru halus */
+    animation: logoFloat 3s ease-in-out infinite;
+    z-index: 3;
 }
 
+/* Style untuk Gambar Logo */
+.loader-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Logo tidak akan gepeng */
+    padding: 5px; /* Memberikan ruang agar logo tidak mepet ke pinggir */
+}
+
+/* Animasi Ring di Sekitar Logo */
+.loader-pulse-ring {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    animation: pulseRing 2s ease-out infinite;
+    z-index: 1;
+}
+
+@keyframes pulseRing {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
 .loader-text h3 { font-size: 1.75rem; font-weight: 700; margin: 0 0 8px 0; background: linear-gradient(135deg, var(--text) 0%, var(--primary-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .loader-text p { font-size: 0.9375rem; color: var(--text-muted); margin: 0 0 32px 0; }
 
-.progress-bar-loader { width: 200px; height: 4px; background: var(--border); border-radius: var(--radius-full); overflow: hidden; margin: 0 auto; }
-.progress-bar-loader .fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--info), var(--success)); width: 0%; transition: width 0.4s ease; border-radius: var(--radius-full); }
+.progress-bar-loader {
+    width: 250px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    margin: 20px auto;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
 
+.progress-bar-loader .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    transition: width 0.4s ease;
+    position: relative;
+}
+
+.progress-glow {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 20px;
+    height: 100%;
+    background: white;
+    filter: blur(5px);
+    opacity: 0.5;
+}
 /* Buttons */
 .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--sm); padding: var(--md) var(--lg); border-radius: var(--radius-md); font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: none; outline: none; min-height: 48px; touch-action: manipulation; position: relative; overflow: hidden;
